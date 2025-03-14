@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball Program Management (Fixed)</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1976D2;
+            --primary-dark: #1565C0;
+            --secondary-color: #64B5F6;
+            --text-color: #333;
+            --background-color: #F5F7FA;
+            --card-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+            padding: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Modal styles */
+        .modal.show {
+            display: block;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            border: none;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .modal-header .btn-close {
+            color: white;
+            opacity: 0.8;
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .dropdown-menu {
+            margin-top: 0.5rem;
+            border: none;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item:active,
+        .dropdown-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Table styles */
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            border: none;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        /* Form styles */
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 0.5rem 1rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25);
+        }
+
+        /* Badge styles */
+        .badge {
+            padding: 0.5em 1em;
+            font-weight: 500;
+            border-radius: 6px;
+        }
+
+        /* Progress bar styles */
+        .progress {
+            height: 0.8rem;
+            border-radius: 0.4rem;
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .progress-bar {
+            background-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Debug Panel -->
+        <div class="container mt-2 mb-2" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
+            <h5>Debug Panel <button class="btn btn-sm btn-outline-secondary" @click="debug.expanded = !debug.expanded">{{ debug.expanded ? 'Hide' : 'Show' }} Details</button></h5>
+            <div v-if="debug.expanded">
+                <p>Vue Status: <span class="badge" :class="$root ? 'bg-success' : 'bg-danger'">{{$root ? 'Initialized' : 'Not Initialized'}}</span></p>
+                <p>Current View: <span class="badge bg-info">{{currentView}}</span></p>
+                <p>Components Loaded: <span class="badge" :class="debug.componentsLoaded ? 'bg-success' : 'bg-danger'">{{debug.componentsLoaded ? 'Yes' : 'No'}}</span></p>
+                <p>Supabase Initialized: <span class="badge" :class="debug.supabaseInitialized ? 'bg-success' : 'bg-danger'">{{debug.supabaseInitialized ? 'Yes' : 'No'}}</span></p>
+                <div v-if="debug.errors.length > 0" class="alert alert-danger">
+                    <h6>Errors:</h6>
+                    <ul>
+                        <li v-for="error in debug.errors">{{ error }}</li>
+                    </ul>
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-sm btn-primary" @click="testSupabaseConnection">Test Supabase Connection</button>
+                    <a href="/setup.html" class="btn btn-sm btn-info" target="_blank">Database Setup Guide</a>
+                </div>
+                
+                <h6 class="mt-3">Test Component:</h6>
+                <test-component></test-component>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#" @click.prevent="setView('home')">Volleyball Program</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="playersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Players
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="playersDropdown">
+                                <li><a class="dropdown-item" href="#" @click.prevent="setView('players')">Roster</a></li>
+                                <li><a class="dropdown-item" href="#" @click.prevent="setView('player-development')">Development</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" @click.prevent="setView('tryouts')">Tryouts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" @click.prevent="setView('drills')">Drills</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" @click.prevent="setView('fundraising')">Fundraising</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" @click.prevent="setView('parents')">Parents</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" @click.prevent="setView('newsletter')">Newsletter</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Home View -->
+            <div v-if="currentView === 'home'" class="container py-5">
+                <h1 class="text-center mb-4">Welcome to Volleyball Program Management</h1>
+                <p class="lead text-center mb-5">Manage your volleyball program efficiently with our comprehensive tools and features.</p>
+                
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Player Management</h5>
+                                <p class="card-text">Manage your team roster, track player development, and maintain player information.</p>
+                                <button class="btn btn-primary" @click="setView('players')">View Players</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Tryouts</h5>
+                                <p class="card-text">Schedule and manage tryout sessions, evaluate players, and track results.</p>
+                                <button class="btn btn-primary" @click="setView('tryouts')">Manage Tryouts</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Drills Library</h5>
+                                <p class="card-text">Access and manage a comprehensive library of volleyball drills and training exercises.</p>
+                                <button class="btn btn-primary" @click="setView('drills')">View Drills</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Fundraising</h5>
+                                <p class="card-text">Organize and track fundraising campaigns to support your program.</p>
+                                <button class="btn btn-primary" @click="setView('fundraising')">View Campaigns</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Parent Portal</h5>
+                                <p class="card-text">Manage parent communications and volunteer opportunities.</p>
+                                <button class="btn btn-primary" @click="setView('parents')">Parent Portal</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Newsletter</h5>
+                                <p class="card-text">Manage newsletter subscriptions and communications.</p>
+                                <button class="btn btn-primary" @click="setView('newsletter')">Manage Newsletter</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Player Roster View -->
+            <player-roster v-if="currentView === 'players'"></player-roster>
+            
+            <!-- Player Development View -->
+            <player-development v-if="currentView === 'player-development'"></player-development>
+            
+            <!-- Tryouts View -->
+            <tryout-evaluation v-if="currentView === 'tryouts'"></tryout-evaluation>
+            
+            <!-- Drills View -->
+            <drills-library v-if="currentView === 'drills'"></drills-library>
+            
+            <!-- Fundraising View -->
+            <fundraising v-if="currentView === 'fundraising'"></fundraising>
+            
+            <!-- Parents View -->
+            <parent-interest v-if="currentView === 'parents'"></parent-interest>
+            
+            <!-- Newsletter View -->
+            <newsletter-subscription v-if="currentView === 'newsletter'"></newsletter-subscription>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://taygbewanmzrdspnidxe.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRheWdiZXdhbm16cmRzcG5pZHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NTc3ODEsImV4cCI6MjA1NzEzMzc4MX0.WUpR6n12W-6AmgQLSmGW07E2FSwBoE5QJwYiZ8N-NMw';
+        window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    </script>
+    <script src="/supabase.js"></script>
+    <script src="/components.js"></script>
+    <script>
+        // Create Vue instance
+        window.vueApp = new Vue({
+            el: '#app',
+            data: {
+                currentView: 'home',
+                debug: {
+                    componentsLoaded: false,
+                    supabaseInitialized: false,
+                    errors: [],
+                    expanded: false
+                }
+            },
+            created() {
+                console.log('Vue instance created');
+                
+                // Check if components are loaded
+                try {
+                    this.debug.componentsLoaded = !!Vue.options.components['player-roster'];
+                    console.log('Components loaded:', this.debug.componentsLoaded);
+                } catch (err) {
+                    console.error('Error checking components:', err);
+                    this.debug.errors.push('Components error: ' + err.message);
+                }
+                
+                // Check if Supabase is initialized
+                try {
+                    this.debug.supabaseInitialized = !!window.supabase;
+                    console.log('Supabase initialized:', this.debug.supabaseInitialized);
+                } catch (err) {
+                    console.error('Error checking Supabase:', err);
+                    this.debug.errors.push('Supabase error: ' + err.message);
+                }
+                
+                // Health check
+                fetch('/api/health')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Server status:', data);
+                    })
+                    .catch(error => {
+                        console.error('Server connection error:', error);
+                        this.debug.errors.push('Server error: ' + error.message);
+                    });
+            },
+            mounted() {
+                console.log('Vue instance mounted');
+                
+                // Check Bootstrap initialization
+                if (typeof bootstrap !== 'undefined') {
+                    console.log('Bootstrap is loaded');
+                    
+                    // Initialize all tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                    // Initialize all popovers
+                    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+                    popoverTriggerList.map(function (popoverTriggerEl) {
+                        return new bootstrap.Popover(popoverTriggerEl);
+                    });
+                } else {
+                    console.warn('Bootstrap is not loaded');
+                    this.debug.errors.push('Bootstrap is not loaded. This may affect UI rendering.');
+                }
+            },
+            methods: {
+                setView(view) {
+                    console.log('Setting view to:', view);
+                    this.currentView = view;
+                },
+                testSupabaseConnection() {
+                    console.log('Testing Supabase connection...');
+                    this.debug.errors = [];
+                    
+                    try {
+                        // Test direct Supabase connection without using count()
+                        window.supabase
+                            .from('players')
+                            .select('*')
+                            .limit(1)
+                            .then(({ data, error }) => {
+                                if (error) {
+                                    console.error('Supabase query error:', error);
+                                    this.debug.errors.push('Supabase query error: ' + error.message);
+                                } else {
+                                    console.log('Supabase connection successful.');
+                                    this.debug.errors.push('Supabase connection successful.');
+                                    
+                                    // Now try to fetch all players
+                                    window.supabase
+                                        .from('players')
+                                        .select('*')
+                                        .then(({ data: players, error: playersError }) => {
+                                            if (playersError) {
+                                                console.error('Error fetching players:', playersError);
+                                                this.debug.errors.push('Error fetching players: ' + playersError.message);
+                                            } else {
+                                                console.log('Players fetched:', players);
+                                                if (players && players.length > 0) {
+                                                    this.debug.errors.push('Successfully fetched ' + players.length + ' players');
+                                                } else {
+                                                    this.debug.errors.push('Players table exists but is empty. You need to add players.');
+                                                    
+                                                    // Check if the table exists
+                                                    this.debug.errors.push('Checking if tables need to be created...');
+                                                    this.checkAndCreateTables();
+                                                }
+                                            }
+                                        });
+                                }
+                            });
+                    } catch (err) {
+                        console.error('Error testing Supabase connection:', err);
+                        this.debug.errors.push('Error testing Supabase connection: ' + err.message);
+                    }
+                },
+                
+                async checkAndCreateTables() {
+                    try {
+                        // Try to create the players table if it doesn't exist
+                        const { error: createError } = await window.supabase.rpc('create_tables_if_not_exist');
+                        
+                        if (createError) {
+                            console.error('Error creating tables:', createError);
+                            this.debug.errors.push('Error creating tables: ' + createError.message);
+                            this.debug.errors.push('You may need to manually create the required tables in Supabase.');
+                        } else {
+                            this.debug.errors.push('Tables created successfully. Please refresh the page.');
+                        }
+                    } catch (err) {
+                        console.error('Error checking tables:', err);
+                        this.debug.errors.push('Error checking tables: ' + err.message);
+                        this.debug.errors.push('You need to create the required tables in your Supabase database.');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

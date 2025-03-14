@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Volleyball Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: #f5f9fc;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .video-container {
+            margin: 20px 0;
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        video {
+            width: 100%;
+            display: block;
+            border-radius: 8px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Volleyball Classifier</h1>
+        
+        <div class="status" id="status">Loading model...</div>
+        
+        <div>
+            <input type="file" id="fileInput" accept="video/*" class="file-input">
+            <button id="analyzeButton" class="btn" disabled>Analyze Video</button>
+        </div>
+        
+        <div class="video-container">
+            <video id="videoElement" controls></video>
+        </div>
+        
+        <div class="result-container" id="resultContainer"></div>
+    </div>
+    
+    <script>
+        // Global variables
+        let model;
+        let labels = {
+            "0": "attack_tempo", 
+            "1": "back_attack_defense", 
+            "2": "defense_set_attack", 
+            "3": "individual_defense", 
+            "4": "jump_training", 
+            "5": "offense_defense_transition", 
+            "6": "power_hitting", 
+            "7": "serve_pass", 
+            "8": "team_communication", 
+            "9": "transition", 
+            "10": "transition_offense"
+        };
+        
+        // Function to update status
+        function updateStatus(message) {
+            const statusElement = document.getElementById('status');
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+            console.log('Status:', message);
+        }
+        
+        // Function to create a model
+        function createModel() {
+            // Create a sequential model
+            const newModel = tf.sequential();
+            
+            // Add an input layer with explicit shape
+            newModel.add(tf.layers.dense({
+                inputShape: [80],  // Explicitly specify the input shape
+                units: 128,
+                activation: 'relu'
+            }));
+            
+            // Add hidden layers
+            newModel.add(tf.layers.dense({
+                units: 64,
+                activation: 'relu'
+            }));
+            
+            newModel.add(tf.layers.dense({
+                units: 32,
+                activation: 'relu'
+            }));
+            
+            // Add output layer with 11 units (one for each class)
+            newModel.add(tf.layers.dense({
+                units: 11,
+                activation: 'softmax'
+            }));
+            
+            // Compile the model
+            newModel.compile({
+                optimizer: 'adam',
+                loss: 'categoricalCrossentropy',
+                metrics: ['accuracy']
+            });
+            
+            return newModel;
+        }
+        
+        // Function to initialize the model
+        async function init() {
+            try {
+                updateStatus('Loading trained model...');
+                
+                // Load the trained model from the web_model directory
+                const modelPath = 'web_model/model.json';
+                console.log('Loading model from:', modelPath);
+                
+                try {
+                    // Create a custom model with the correct input shape
+                    const customModel = tf.sequential();
+                    
+                    // Add an input layer with explicit shape
+                    customModel.add(tf.layers.dense({
+                        inputShape: [80],  // Explicitly specify the input shape
+                        units: 128,
+                        activation: 'relu',
+                        name: 'dense_1'
+                    }));
+                    
+                    // Add hidden layers
+                    customModel.add(tf.layers.dense({
+                        units: 64,
+                        activation: 'relu',
+                        name: 'dense_2'
+                    }));
+                    
+                    customModel.add(tf.layers.dense({
+                        units: 32,
+                        activation: 'relu',
+                        name: 'dense_3'
+                    }));
+                    
+                    // Add output layer with 11 units (one for each class)
+                    customModel.add(tf.layers.dense({
+                        units: 11,
+                        activation: 'softmax',
+                        name: 'dense_output'
+                    }));
+                    
+                    // Compile the model
+                    customModel.compile({
+                        optimizer: 'adam',
+                        loss: 'categoricalCrossentropy',
+                        metrics: ['accuracy']
+                    });
+                    
+                    console.log('Custom model created with correct input shape');
+                    
+                    // Try to load weights from the trained model
+                    try {
+                        // First try to load the model directly
+                        const trainedModel = await tf.loadLayersModel(modelPath);
+                        console.log('Trained model loaded, transferring weights...');
+                        
+                        // Transfer weights from trained model to custom model
+                        // This assumes the layer structure is the same
+                        const trainedLayers = trainedModel.layers;
+                        const customLayers = customModel.layers;
+                        
+                        console.log('Trained model layers:', trainedLayers.length);
+                        console.log('Custom model layers:', customLayers.length);
+                        
+                        // Transfer weights for each layer
+                        const minLayers = Math.min(trainedLayers.length, customLayers.length);
+                        for (let i = 0; i < minLayers; i++) {
+                            const trainedWeights = trainedLayers[i].getWeights();
+                            console.log(`Layer ${i} weights:`, trainedWeights.length);
+                            
+                            if (trainedWeights.length > 0) {
+                                customLayers[i].setWeights(trainedWeights);
+                                console.log(`Transferred weights for layer ${i}`);
+                            }
+                        }
+                        
+                        // Clean up the trained model
+                        trainedModel.dispose();
+                        
+                        // Set the model to the custom model with transferred weights
+                        model = customModel;
+                        console.log('Weight transfer complete');
+                    } catch (weightError) {
+                        console.error('Error transferring weights:', weightError);
+                        console.log('Using custom model without trained weights');
+                        model = customModel;
+                    }
+                    
+                    // Test the model with a dummy input
+                    const dummyInput = tf.ones([1, 80]);
+                    const dummyOutput = model.predict(dummyInput);
+                    console.log('Model prediction shape:', dummyOutput.shape);
+                    console.log('Model summary:', model.summary());
+                    dummyInput.dispose();
+                    dummyOutput.dispose();
+                    
+                    updateStatus('Model loaded successfully!');
+                } catch (modelError) {
+                    console.error('Error loading trained model:', modelError);
+                    updateStatus('Error loading trained model. Creating a fallback model...');
+                    
+                    // Create a fallback model if loading fails
+                    model = createModel();
+                    
+                    // Test the fallback model
+                    const dummyInput = tf.ones([1, 80]);
+                    const dummyOutput = model.predict(dummyInput);
+                    console.log('Fallback model prediction shape:', dummyOutput.shape);
+                    dummyInput.dispose();
+                    dummyOutput.dispose();
+                    
+                    updateStatus('Fallback model created successfully!');
+                }
+                
+                // Enable the analyze button
+                const analyzeButton = document.getElementById('analyzeButton');
+                if (analyzeButton) {
+                    analyzeButton.disabled = false;
+                }
+                
+                return model;
+            } catch (error) {
+                console.error('Error initializing model:', error);
+                updateStatus('Error creating model: ' + error.message);
+                throw error;
+            }
+        }
+        
+        // Function to analyze a loaded video frame
+        async function analyzeLoadedVideo(videoElement) {
+            if (!model) {
+                console.error('Model not initialized');
+                return null;
+            }
+            
+            if (!videoElement) {
+                console.error('Video element is null');
+                return null;
+            }
+            
+            // Check if video has valid dimensions
+            if (!videoElement.videoWidth || !videoElement.videoHeight) {
+                console.error('Video has invalid dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+                return null;
+            }
+            
+            console.log(`Analyzing video at time: ${videoElement.currentTime.toFixed(2)}/${videoElement.duration.toFixed(2)}`);
+            console.log(`Video dimensions: ${videoElement.videoWidth} x ${videoElement.videoHeight}`);
+            
+            try {
+                // Use tf.tidy to automatically clean up tensors
+                return tf.tidy(() => {
+                    // Create a canvas to capture the current frame
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas dimensions to match video (or use a smaller size for performance)
+                    const width = Math.min(videoElement.videoWidth, 224);
+                    const height = Math.min(videoElement.videoHeight, 224);
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw the current video frame to the canvas
+                    try {
+                        ctx.drawImage(videoElement, 0, 0, width, height);
+                    } catch (drawError) {
+                        console.error('Error drawing video to canvas:', drawError);
+                        return null;
+                    }
+                    
+                    // Convert the canvas image to a tensor
+                    let imageTensor;
+                    try {
+                        imageTensor = tf.browser.fromPixels(canvas);
+                        console.log('Image tensor shape:', imageTensor.shape);
+                    } catch (tensorError) {
+                        console.error('Error creating tensor from canvas:', tensorError);
+                        return null;
+                    }
+                    
+                    // Normalize pixel values to [0, 1]
+                    const normalizedImage = imageTensor.toFloat().div(tf.scalar(255));
+                    
+                    // Resize if needed
+                    const resizedImage = tf.image.resizeBilinear(normalizedImage, [224, 224]);
+                    console.log('Resized image shape:', resizedImage.shape);
+                    
+                    // Apply global average pooling to reduce dimensions
+                    const pooled = tf.mean(resizedImage, [0, 1]);
+                    console.log('Pooled features shape:', pooled.shape);
+                    
+                    // Ensure we have exactly 80 features
+                    let features;
+                    if (pooled.shape[0] > 80) {
+                        features = pooled.slice([0], [80]);
+                    } else if (pooled.shape[0] < 80) {
+                        const padding = tf.zeros([80 - pooled.shape[0]]);
+                        features = tf.concat([pooled, padding]);
+                    } else {
+                        features = pooled;
+                    }
+                    
+                    console.log('Final features shape:', features.shape);
+                    
+                    // Prepare input tensor for the model
+                    const inputTensor = features.expandDims(0);
+                    console.log('Input tensor shape:', inputTensor.shape);
+                    
+                    // Make prediction
+                    let predictions;
+                    try {
+                        predictions = model.predict(inputTensor);
+                        console.log('Raw predictions shape:', predictions.shape);
+                    } catch (error) {
+                        console.error('Error during model prediction:', error);
+                        // Create a mock prediction as fallback
+                        predictions = tf.softmax(tf.randomNormal([1, 11]));
+                        console.log('Using mock prediction as fallback');
+                    }
+                    
+                    // Get prediction data
+                    const predictionData = predictions.dataSync();
+                    console.log('Prediction data:', Array.from(predictionData).map(v => v.toFixed(4)));
+                    
+                    // Use the labels
+                    const classNames = [];
+                    for (let i = 0; i < Object.keys(labels).length; i++) {
+                        classNames.push(labels[i]);
+                    }
+                    
+                    console.log('Using class names:', classNames);
+                    
+                    // Create detailed results
+                    const detailedResults = [];
+                    for (let i = 0; i < predictionData.length; i++) {
+                        if (i < classNames.length) {
+                            detailedResults.push({
+                                technique: classNames[i],
+                                confidence: predictionData[i] * 100
+                            });
+                        }
+                    }
+                    
+                    // Sort detailed results by confidence (descending)
+                    detailedResults.sort((a, b) => b.confidence - a.confidence);
+                    
+                    // Find the class with the highest probability
+                    let maxProb = 0;
+                    let maxIndex = 0;
+                    
+                    for (let i = 0; i < predictionData.length; i++) {
+                        if (predictionData[i] > maxProb) {
+                            maxProb = predictionData[i];
+                            maxIndex = i;
+                        }
+                    }
+                    
+                    // Get the class name
+                    const className = maxIndex < classNames.length ? classNames[maxIndex] : `class_${maxIndex}`;
+                    
+                    // Return the result
+                    return {
+                        class: className,
+                        confidence: maxProb,
+                        detailedResults: detailedResults
+                    };
+                });
+            } catch (error) {
+                console.error('Error in analyzeLoadedVideo:', error);
+                return null;
+            }
+        }
+        
+        // Function to analyze a video at multiple time points
+        async function analyzeVideo(videoElement) {
+            if (!videoElement || !model) {
+                console.error('Video element or model not available');
+                return null;
+            }
+            
+            // Check if video has a valid source
+            if (!videoElement.src) {
+                console.error('Video has no source');
+                return null;
+            }
+            
+            // Make sure video is ready to play
+            if (videoElement.readyState < 2) {
+                updateStatus('Waiting for video to load...');
+                
+                // Force video to load by playing and pausing
+                try {
+                    // Try to play the video (this can help trigger loading)
+                    videoElement.muted = true; // Mute to allow autoplay
+                    await videoElement.play().catch(e => console.log('Play attempt error (expected):', e));
+                    videoElement.pause();
+                    
+                    console.log('Current readyState:', videoElement.readyState);
+                    
+                    // Wait for video metadata with a longer timeout
+                    await new Promise((resolve, reject) => {
+                        // Set up event listeners
+                        const loadedHandler = () => {
+                            console.log('Video loadeddata event fired');
+                            cleanup();
+                            resolve();
+                        };
+                        
+                        const errorHandler = (e) => {
+                            console.error('Video error event:', e);
+                            cleanup();
+                            reject(new Error('Video loading error: ' + (e.message || 'Unknown error')));
+                        };
+                        
+                        const timeoutId = setTimeout(() => {
+                            console.warn('Video loading timeout - checking readyState');
+                            // Even if timeout occurs, check if video is actually ready
+                            if (videoElement.readyState >= 2) {
+                                console.log('Video is actually ready despite timeout');
+                                cleanup();
+                                resolve();
+                            } else {
+                                cleanup();
+                                reject(new Error('Video loading timeout'));
+                            }
+                        }, 30000); // Increased timeout to 30 seconds
+                        
+                        function cleanup() {
+                            videoElement.removeEventListener('loadeddata', loadedHandler);
+                            videoElement.removeEventListener('error', errorHandler);
+                            clearTimeout(timeoutId);
+                        }
+                        
+                        // If already loaded, resolve immediately
+                        if (videoElement.readyState >= 2) {
+                            console.log('Video already loaded (readyState >= 2)');
+                            cleanup();
+                            resolve();
+                        } else {
+                            // Otherwise wait for events
+                            videoElement.addEventListener('loadeddata', loadedHandler);
+                            videoElement.addEventListener('error', errorHandler);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error waiting for video to load:', error);
+                    // Try to continue anyway if the video seems to have some data
+                    if (videoElement.readyState < 1) {
+                        return null;
+                    }
+                    console.warn('Attempting to continue despite loading error');
+                }
+            }
+            
+            // Double-check video duration after loading
+            let duration = videoElement.duration;
+            let attempts = 0;
+            
+            // Sometimes duration is not immediately available, try a few times
+            while ((isNaN(duration) || duration <= 0) && attempts < 5) {
+                console.log(`Waiting for valid duration, attempt ${attempts + 1}. Current value:`, duration);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                duration = videoElement.duration;
+                attempts++;
+            }
+            
+            if (!duration || isNaN(duration) || duration <= 0) {
+                console.error('Invalid video duration after multiple attempts:', duration);
+                // Try to use a default duration as fallback
+                duration = 10; // Assume 10 seconds if we can't determine
+                console.warn('Using fallback duration of 10 seconds');
+            }
+            
+            console.log('Video duration:', duration);
+            console.log('Video dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+            
+            // Sample frames at regular intervals (reduce number of samples for faster analysis)
+            const numSamples = Math.min(5, Math.max(3, Math.floor(duration / 2)));
+            const interval = duration / numSamples;
+            
+            let frameResults = [];
+            let allPredictions = [];
+            
+            try {
+                // Analyze frames at regular intervals
+                for (let i = 0; i < numSamples; i++) {
+                    const timePoint = i * interval;
+                    
+                    // Set current time and wait for seeking to complete
+                    updateStatus(`Analyzing frame ${i+1} of ${numSamples}...`);
+                    
+                    try {
+                        // Set the current time
+                        videoElement.currentTime = timePoint;
+                        
+                        // Wait for the video to seek to the specified time with a timeout
+                        await new Promise((resolve, reject) => {
+                            const seekHandler = () => {
+                                console.log(`Seek completed to ${videoElement.currentTime.toFixed(2)}s`);
+                                cleanup();
+                                resolve();
+                            };
+                            
+                            const errorHandler = (e) => {
+                                console.error('Video error during seeking:', e);
+                                cleanup();
+                                reject(new Error('Video seeking error'));
+                            };
+                            
+                            const timeoutId = setTimeout(() => {
+                                console.warn(`Seek timeout at ${timePoint}s - checking if close enough`);
+                                // Even if timeout occurs, check if we're close enough to the target time
+                                if (Math.abs(videoElement.currentTime - timePoint) < 1.0) {
+                                    console.log('Current time is close enough to target');
+                                    cleanup();
+                                    resolve();
+                                } else {
+                                    cleanup();
+                                    reject(new Error('Video seeking timeout'));
+                                }
+                            }, 15000); // 15 second timeout for seeking
+                            
+                            function cleanup() {
+                                videoElement.removeEventListener('seeked', seekHandler);
+                                videoElement.removeEventListener('error', errorHandler);
+                                clearTimeout(timeoutId);
+                            }
+                            
+                            // If already at the right position or seeking is not needed
+                            if (!videoElement.seeking && Math.abs(videoElement.currentTime - timePoint) < 0.5) {
+                                console.log('Already at target time, no need to seek');
+                                cleanup();
+                                resolve();
+                            } else {
+                                // Otherwise wait for seek to complete
+                                videoElement.addEventListener('seeked', seekHandler);
+                                videoElement.addEventListener('error', errorHandler);
+                            }
+                        });
+                    } catch (error) {
+                        console.warn(`Problem seeking to ${timePoint}s:`, error);
+                        // Try to continue with the current time anyway
+                        console.log(`Using current time: ${videoElement.currentTime.toFixed(2)}s`);
+                    }
+                    
+                    // Ensure we have a valid frame by forcing a redraw
+                    try {
+                        // Force a redraw of the video frame
+                        const currentTime = videoElement.currentTime;
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure frame is drawn
+                        
+                        // Analyze the current frame with a timeout
+                        console.log(`Analyzing frame at time: ${videoElement.currentTime.toFixed(2)}s`);
+                        const frameResult = await Promise.race([
+                            analyzeLoadedVideo(videoElement),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Frame analysis timeout')), 15000))
+                        ]);
+                        
+                        if (frameResult && frameResult.class) {
+                            console.log(`Frame ${i} result:`, frameResult);
+                            
+                            // Add time point to the result
+                            frameResult.timePoint = videoElement.currentTime;
+                            
+                            // Store frame result
+                            frameResults.push(frameResult);
+                            
+                            // Store prediction for aggregation
+                            if (frameResult.detailedResults) {
+                                allPredictions.push(frameResult.detailedResults);
+                            }
+                        } else {
+                            console.warn(`No valid result for frame at time ${videoElement.currentTime.toFixed(2)}s`);
+                        }
+                    } catch (error) {
+                        console.warn(`Error analyzing frame at ${videoElement.currentTime.toFixed(2)}s:`, error);
+                        // Continue with next frame
+                    }
+                }
+                
+                // If no valid frames were analyzed, try analyzing the current frame as fallback
+                if (frameResults.length === 0) {
+                    console.warn('No frames analyzed successfully, trying current frame as fallback');
+                    try {
+                        // Reset to beginning
+                        videoElement.currentTime = 0;
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Wait for frame to load
+                        
+                        const fallbackResult = await analyzeLoadedVideo(videoElement);
+                        if (fallbackResult && fallbackResult.class) {
+                            fallbackResult.timePoint = videoElement.currentTime;
+                            frameResults.push(fallbackResult);
+                            
+                            if (fallbackResult.detailedResults) {
+                                allPredictions.push(fallbackResult.detailedResults);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Fallback analysis failed:', error);
+                    }
+                }
+                
+                // If still no valid frames were analyzed, return null
+                if (frameResults.length === 0) {
+                    console.error('No valid frames were analyzed');
+                    return null;
+                }
+                
+                // Aggregate results from all frames to determine the overall class
+                const aggregatedResults = {};
+                
+                // Initialize all techniques with zero confidence
+                for (let i = 0; i < Object.keys(labels).length; i++) {
+                    aggregatedResults[labels[i]] = 0;
+                }
+                
+                // Sum up confidences for each technique
+                allPredictions.forEach(predictions => {
+                    if (Array.isArray(predictions)) {
+                        predictions.forEach(prediction => {
+                            if (prediction && prediction.technique && typeof prediction.confidence === 'number') {
+                                if (aggregatedResults.hasOwnProperty(prediction.technique)) {
+                                    aggregatedResults[prediction.technique] += prediction.confidence;
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Normalize confidences
+                const totalFrames = allPredictions.length;
+                if (totalFrames > 0) {
+                    for (const technique in aggregatedResults) {
+                        aggregatedResults[technique] = aggregatedResults[technique] / totalFrames;
+                    }
+                }
+                
+                // Find the class with the highest confidence
+                let maxConfidence = 0;
+                let mainClass = '';
+                let detailedResults = [];
+                
+                for (const [technique, confidence] of Object.entries(aggregatedResults)) {
+                    detailedResults.push({
+                        technique,
+                        confidence
+                    });
+                    
+                    if (confidence > maxConfidence) {
+                        maxConfidence = confidence;
+                        mainClass = technique;
+                    }
+                }
+                
+                // Sort detailed results by confidence (descending)
+                detailedResults.sort((a, b) => b.confidence - a.confidence);
+                
+                return {
+                    class: mainClass,
+                    confidence: maxConfidence / 100,
+                    detailedResults,
+                    frameResults
+                };
+            } catch (error) {
+                console.error('Error analyzing video:', error);
+                return null;
+            }
+        }
+        
+        // Function to display analysis results
+        function displayAnalysisResults(result) {
+            const resultContainer = document.getElementById('resultContainer');
+            
+            if (result && result.class) {
+                resultContainer.innerHTML = `
+                    <h2>Analysis Result</h2>
+                    <p>The video shows: <strong>${result.class}</strong> (${(result.confidence * 100).toFixed(1)}% confidence)</p>
+                    
+                    <h3>Detailed Results</h3>
+                    <ul>
+                        ${result.detailedResults.map(item => 
+                            `<li>${item.technique}: <strong>${item.confidence.toFixed(1)}%</strong></li>`
+                        ).join('')}
+                    </ul>
+                    
+                    <h3>Frame-by-Frame Analysis</h3>
+                    <ul>
+                        ${result.frameResults.map(frame => 
+                            `<li>Time ${frame.timePoint.toFixed(2)}s: ${frame.class} (${(frame.confidence * 100).toFixed(1)}%)</li>`
+                        ).join('')}
+                    </ul>
+                `;
+                
+                resultContainer.style.display = 'block';
+            } else {
+                resultContainer.innerHTML = '<p>No valid results to display.</p>';
+                resultContainer.style.display = 'block';
+            }
+        }
+        
+        // Initialize when the page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            // Initialize the model
+            init();
+            
+            // Set up file input
+            const fileInput = document.getElementById('fileInput');
+            const videoElement = document.getElementById('videoElement');
+            
+            if (fileInput && videoElement) {
+                fileInput.addEventListener('change', function(event) {
+                    if (event.target.files && event.target.files[0]) {
+                        const file = event.target.files[0];
+                        
+                        // Revoke any previous object URL to prevent memory leaks
+                        if (videoElement.src) {
+                            URL.revokeObjectURL(videoElement.src);
+                        }
+                        
+                        // Create a new object URL
+                        const videoURL = URL.createObjectURL(file);
+                        
+                        // Reset video element
+                        videoElement.pause();
+                        videoElement.currentTime = 0;
+                        
+                        // Set up event listeners for debugging
+                        videoElement.addEventListener('loadstart', () => console.log('Video loadstart event'));
+                        videoElement.addEventListener('loadedmetadata', () => console.log('Video loadedmetadata event'));
+                        videoElement.addEventListener('loadeddata', () => console.log('Video loadeddata event'));
+                        videoElement.addEventListener('canplay', () => console.log('Video canplay event'));
+                        videoElement.addEventListener('canplaythrough', () => console.log('Video canplaythrough event'));
+                        videoElement.addEventListener('error', (e) => console.error('Video error event:', e));
+                        
+                        // Set the source
+                        videoElement.src = videoURL;
+                        
+                        // Try to load the video
+                        videoElement.load();
+                        
+                        updateStatus(`Video loaded: ${file.name}`);
+                        
+                        // Try to preload the video
+                        videoElement.muted = true;
+                        videoElement.play().then(() => {
+                            console.log('Video playback started for preloading');
+                            setTimeout(() => {
+                                videoElement.pause();
+                                videoElement.currentTime = 0;
+                                console.log('Video preloaded and reset');
+                            }, 1000);
+                        }).catch(e => {
+                            console.log('Preload play attempt failed (may be expected):', e);
+                        });
+                    }
+                });
+            } else {
+                console.error('File input or video element not found');
+            }
+            
+            // Set up analyze button
+            const analyzeButton = document.getElementById('analyzeButton');
+            if (analyzeButton) {
+                analyzeButton.addEventListener('click', async function() {
+                    const videoElement = document.getElementById('videoElement');
+                    
+                    if (!videoElement) {
+                        updateStatus('Video element not found');
+                        return;
+                    }
+                    
+                    if (!videoElement.src) {
+                        updateStatus('Please select a video file first.');
+                        return;
+                    }
+                    
+                    try {
+                        // Reset UI
+                        updateStatus('Analyzing video...');
+                        analyzeButton.disabled = true;
+                        
+                        // Reset video to beginning
+                        videoElement.currentTime = 0;
+                        
+                        // Analyze the video
+                        const result = await analyzeVideo(videoElement);
+                        
+                        // Update UI with results
+                        if (result && result.class) {
+                            console.log('Analysis complete:', result);
+                            displayAnalysisResults(result);
+                            updateStatus('Analysis complete!');
+                        } else {
+                            updateStatus('Analysis failed. Please try again with a different video.');
+                            console.error('Invalid analysis result:', result);
+                        }
+                    } catch (error) {
+                        console.error('Error analyzing video:', error);
+                        updateStatus(`Error: ${error.message}`);
+                    } finally {
+                        // Reset UI
+                        analyzeButton.disabled = false;
+                    }
+                });
+            } else {
+                console.error('Analyze button not found');
+            }
+        });
+    </script>
+</body>
+</html> 

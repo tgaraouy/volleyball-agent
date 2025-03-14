@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Model Loading</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+</head>
+<body>
+    <h1>Test Model Loading</h1>
+    <div id="status">Loading model...</div>
+    
+    <script>
+        async function loadModel() {
+            const statusElement = document.getElementById('status');
+            
+            try {
+                // Try to load the model
+                const modelPath = 'http://localhost:8000/web_model/model.json';
+                statusElement.textContent = `Attempting to load model from ${modelPath}...`;
+                
+                const model = await tf.loadLayersModel(modelPath);
+                statusElement.textContent = 'Model loaded successfully!';
+                console.log('Model loaded successfully:', model);
+                
+                // Try to load labels
+                try {
+                    const labelsResponse = await fetch('http://localhost:8000/web_model/labels.json');
+                    const labels = await labelsResponse.json();
+                    console.log('Labels loaded successfully:', labels);
+                    statusElement.textContent += ' Labels loaded successfully!';
+                } catch (labelsError) {
+                    console.error('Error loading labels:', labelsError);
+                    statusElement.textContent += ' Error loading labels.';
+                }
+                
+                // Test the model with a dummy input
+                const dummyInput = tf.ones([1, 80]);
+                const prediction = model.predict(dummyInput);
+                console.log('Prediction shape:', prediction.shape);
+                console.log('Prediction data:', await prediction.data());
+                statusElement.textContent += ' Model prediction works!';
+                
+                // Clean up
+                dummyInput.dispose();
+                prediction.dispose();
+                
+            } catch (error) {
+                console.error('Error loading model:', error);
+                statusElement.textContent = `Error loading model: ${error.message}`;
+            }
+        }
+        
+        // Load the model when the page loads
+        window.addEventListener('DOMContentLoaded', loadModel);
+    </script>
+</body>
+</html> 

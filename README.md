@@ -1,69 +1,59 @@
-# Volleyball Program Management System
+# Volleyball Program Management
 
-A comprehensive web application for managing volleyball program activities, including player registrations, tryout evaluations, and program analytics.
-
-## Features
-
-- **Dashboard Overview**: Real-time statistics and program metrics
-- **Interest Form Management**: Track and manage player registration interest
-- **Tryout Evaluation System**: Structured player evaluation process
-- **Event Management**: Schedule and track upcoming tryouts and events
-
-## Tech Stack
-
-- **Frontend**: React.js with Tailwind CSS
-- **Backend**: Node.js with Express
-- **Database**: Supabase
-- **AI Integration**: OpenAI for player development plans
-- **Authentication**: Supabase Auth
+A comprehensive web application for managing volleyball programs, including player rosters, development plans, tryouts, drills, fundraising, parent communications, and newsletters.
 
 ## Getting Started
 
-1. Clone the repository:
-   ```bash
-   git clone [repository-url]
-   ```
+### Prerequisites
 
-2. Install dependencies:
-   ```bash
-   # Install server dependencies
-   cd server
-   npm install
+- Python 3.x (for running the local server)
+- A modern web browser (Chrome, Firefox, Edge, etc.)
+- A Supabase account with a project set up
 
-   # Install client dependencies
-   cd ../client
-   npm install
-   ```
+### Running the Application
 
-3. Set up environment variables:
-   - Create `.env` file in the server directory
-   - Add required environment variables (see `.env.example`)
+1. Clone or download this repository to your local machine
+2. Open PowerShell in the project directory
+3. Run the start-server script:
 
-4. Start the development servers:
-   ```bash
-   # Start the backend server (from server directory)
-   npm start
+```powershell
+.\start-server.ps1
+```
 
-   # Start the frontend development server (from client directory)
-   npm start
-   ```
+4. Open your web browser and navigate to http://localhost:3000
 
-## Environment Variables
+### Setting Up the Database
 
-Required environment variables:
-- `PORT`: Server port (default: 3001)
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_ANON_KEY`: Your Supabase anonymous key
-- `OPENAI_API_KEY`: Your OpenAI API key
+Before using the application, you need to set up the database tables in Supabase:
 
-## Contributing
+1. Start the application and navigate to http://localhost:3000
+2. Click "Show Details" in the Debug Panel
+3. Click "Database Setup Guide"
+4. Follow the instructions on the setup page to create the necessary tables in your Supabase project
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## Features
 
-## License
+- **Player Management**: Track player information, contact details, and physical attributes
+- **Player Development**: Create and monitor development plans for individual players
+- **Tryouts**: Schedule and manage tryout sessions, evaluate players
+- **Drills Library**: Maintain a collection of volleyball drills and training exercises
+- **Fundraising**: Organize and track fundraising campaigns
+- **Parent Portal**: Manage parent communications and volunteer opportunities
+- **Newsletter**: Handle newsletter subscriptions and communications
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+## Troubleshooting
+
+If you encounter issues with the application:
+
+1. Check the Debug Panel by clicking "Show Details" at the top of the page
+2. Visit the Debug Page at http://localhost:3000/debug.html
+3. Make sure your Supabase database tables are properly set up
+4. Check the browser console for any JavaScript errors
+
+## Technologies Used
+
+- Vue.js 2.6 (Frontend framework)
+- Vue Router (Client-side routing)
+- Bootstrap 5 (UI framework)
+- Supabase (Backend as a Service)
+- Python HTTP Server (Local development server) 

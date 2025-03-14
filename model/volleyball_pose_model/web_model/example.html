@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Volleyball Technique Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin-top: 20px; font-weight: bold; }
+        .container { max-width: 800px; margin: 0 auto; }
+        button { padding: 10px; margin: 10px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Volleyball Technique Classifier</h1>
+        <p>Upload a video file to classify volleyball techniques:</p>
+        <input type="file" id="videoInput" accept="video/*">
+        <button id="analyze">Analyze Video</button>
+        
+        <div class="result" id="result"></div>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <video id="video" style="display:none;"></video>
+    </div>
+
+    <script>
+        // Load the model
+        let model;
+        let labels;
+        
+        async function loadModel() {
+            try {
+                model = await tf.loadLayersModel('./model.json');
+                const response = await fetch('./labels.json');
+                labels = await response.json();
+                console.log('Model and labels loaded successfully');
+            } catch (error) {
+                console.error('Error loading model or labels:', error);
+            }
+        }
+        
+        // Load model on page load
+        loadModel();
+        
+        // Extract features from a video frame
+        function extractFeatures(imageData) {
+            // This is a placeholder - in a real implementation,
+            // you would need to implement the same feature extraction
+            // logic that was used in the Python code
+            
+            // For demonstration, return a random feature vector
+            return tf.randomNormal([1, 80]);
+        }
+        
+        document.getElementById('analyze').addEventListener('click', async () => {
+            const videoInput = document.getElementById('videoInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!videoInput.files.length) {
+                resultDiv.textContent = 'Please select a video file first.';
+                return;
+            }
+            
+            if (!model) {
+                resultDiv.textContent = 'Model is still loading. Please wait.';
+                return;
+            }
+            
+            resultDiv.textContent = 'Analyzing video...';
+            
+            const file = videoInput.files[0];
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Create a URL for the video file
+            const videoURL = URL.createObjectURL(file);
+            video.src = videoURL;
+            
+            // Wait for the video to be loaded
+            await new Promise(resolve => {
+                video.onloadeddata = resolve;
+            });
+            
+            // Set canvas dimensions
+            canvas.width = 128;
+            canvas.height = 128;
+            
+            // Extract frames and perform prediction
+            try {
+                // For demonstration, just take one frame from the middle of the video
+                video.currentTime = video.duration / 2;
+                
+                // Wait for the seek to complete
+                await new Promise(resolve => {
+                    video.onseeked = resolve;
+                });
+                
+                // Draw the frame on the canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Get the image data
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // Extract features (placeholder in this demo)
+                const features = extractFeatures(imageData);
+                
+                // Make prediction
+                const prediction = model.predict(features);
+                const classId = prediction.argMax(1).dataSync()[0];
+                const className = labels[classId] || `Unknown (${classId})`;
+                const confidence = prediction.max().dataSync()[0] * 100;
+                
+                resultDiv.textContent = `Predicted technique: ${className} (Confidence: ${confidence.toFixed(1)}%)`;
+                
+            } catch (error) {
+                console.error('Error analyzing video:', error);
+                resultDiv.textContent = 'Error analyzing video. See console for details.';
+            } finally {
+                // Clean up
+                URL.revokeObjectURL(videoURL);
+            }
+        });
+    </script>
+</body>
+</html>

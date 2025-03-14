@@ -1,53 +1,92 @@
 import React, { useState } from 'react';
 import InterestForm from './forms/InterestForm';
 import TryoutEvaluationForm from './forms/TryoutEvaluationForm';
+import DrillsSection from './DrillsSection';
 import { 
   UserGroupIcon, 
   CalendarIcon, 
   BellIcon,
-  ArrowTrendingUpIcon,
+  ChartBarIcon,
   UserPlusIcon,
   ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 
-const StatCard = ({ stat }) => (
-  <div className="stat-card">
-    <div className={`h-1 bg-${stat.color}-500 w-full`} />
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h3 className="text-sm font-medium text-gray-500">{stat.name}</h3>
-          <div className="mt-2 flex items-baseline space-x-2">
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-            <span className={`text-sm font-medium ${
-              stat.changeType === 'increase' 
-                ? 'text-emerald-600' 
-                : 'text-gray-500'
-            }`}>
-              {stat.change}
-            </span>
+const StatCard = ({ stat }) => {
+  const colorClasses = {
+    indigo: {
+      bar: 'bg-indigo-500',
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-600'
+    },
+    emerald: {
+      bar: 'bg-emerald-500',
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-600'
+    },
+    violet: {
+      bar: 'bg-violet-500',
+      bg: 'bg-violet-50',
+      text: 'text-violet-600'
+    },
+    blue: {
+      bar: 'bg-blue-500',
+      bg: 'bg-blue-50',
+      text: 'text-blue-600'
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100">
+      <div className={`h-1 w-full ${colorClasses[stat.color].bar}`} />
+      <div className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-gray-500">{stat.name}</h3>
+            <div className="mt-2 flex items-baseline space-x-2">
+              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+              <span className={`text-sm font-medium ${
+                stat.changeType === 'increase' 
+                  ? 'text-emerald-600' 
+                  : 'text-gray-500'
+              }`}>
+                {stat.change}
+              </span>
+            </div>
           </div>
-        </div>
-        <div className={`rounded-full p-3 bg-${stat.color}-50`}>
-          <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+          <div className={`rounded-full p-3 ${colorClasses[stat.color].bg}`}>
+            <stat.icon className={`h-6 w-6 ${colorClasses[stat.color].text}`} />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-const ActivityItem = ({ activity }) => (
-  <div className="flex items-start space-x-4">
-    <div className={`flex-shrink-0 rounded-full p-3 bg-${activity.color}-50`}>
-      <activity.icon className={`h-5 w-5 text-${activity.color}-600`} />
+const ActivityItem = ({ activity }) => {
+  const colorClasses = {
+    indigo: {
+      bg: 'bg-indigo-50',
+      text: 'text-indigo-600'
+    },
+    emerald: {
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-600'
+    }
+  };
+
+  return (
+    <div className="flex items-start space-x-4">
+      <div className={`flex-shrink-0 rounded-full p-3 ${colorClasses[activity.color].bg}`}>
+        <activity.icon className={`h-5 w-5 ${colorClasses[activity.color].text}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-900 truncate">{activity.title}</p>
+        <p className="text-sm text-gray-600 truncate">{activity.name} - {activity.detail}</p>
+        <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+      </div>
     </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold text-gray-900 truncate">{activity.title}</p>
-      <p className="text-sm text-gray-600 truncate">{activity.name} - {activity.detail}</p>
-      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-    </div>
-  </div>
-);
+  );
+};
 
 const EventCard = ({ event }) => (
   <div className="flex items-start space-x-4">
@@ -96,7 +135,7 @@ const Dashboard = () => {
       value: '32%',
       change: '+2.5%',
       changeType: 'increase',
-      icon: ArrowTrendingUpIcon,
+      icon: ChartBarIcon,
       color: 'blue'
     }
   ];
@@ -143,6 +182,8 @@ const Dashboard = () => {
         return <InterestForm />;
       case 'tryouts':
         return <TryoutEvaluationForm playerId="test" evaluatorId="test" />;
+      case 'drills':
+        return <DrillsSection />;
       case 'overview':
       default:
         return (
@@ -157,7 +198,7 @@ const Dashboard = () => {
             {/* Three Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Recent Activity */}
-              <div className="stat-card p-6">
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">Recent Activity</h2>
                 <div className="space-y-6">
                   {recentActivity.map((activity, index) => (
@@ -167,7 +208,7 @@ const Dashboard = () => {
               </div>
 
               {/* Upcoming Events */}
-              <div className="stat-card p-6">
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">Upcoming Events</h2>
                 <div className="space-y-6">
                   {upcomingEvents.map((event, index) => (
@@ -177,12 +218,12 @@ const Dashboard = () => {
               </div>
 
               {/* Quick Actions */}
-              <div className="stat-card p-6">
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
                 <div className="space-y-4">
                   <button
                     onClick={() => setActiveTab('interest')}
-                    className="action-button bg-indigo-50 hover:bg-indigo-100 focus:ring-indigo-500"
+                    className="w-full flex items-center space-x-3 p-4 rounded-lg text-left transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-indigo-50 hover:bg-indigo-100 focus:ring-indigo-500"
                   >
                     <div className="flex-shrink-0 rounded-full p-2 bg-indigo-100">
                       <UserPlusIcon className="h-6 w-6 text-indigo-600" />
@@ -194,7 +235,7 @@ const Dashboard = () => {
                   </button>
                   <button
                     onClick={() => setActiveTab('tryouts')}
-                    className="action-button bg-emerald-50 hover:bg-emerald-100 focus:ring-emerald-500"
+                    className="w-full flex items-center space-x-3 p-4 rounded-lg text-left transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-emerald-50 hover:bg-emerald-100 focus:ring-emerald-500"
                   >
                     <div className="flex-shrink-0 rounded-full p-2 bg-emerald-100">
                       <ClipboardDocumentCheckIcon className="h-6 w-6 text-emerald-600" />
@@ -220,11 +261,15 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <h1 className="text-2xl font-bold text-gray-900">Volleyball Program Dashboard</h1>
             <nav className="flex space-x-2">
-              {['overview', 'interest', 'tryouts'].map((tab) => (
+              {['overview', 'interest', 'tryouts', 'drills'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`nav-tab ${activeTab === tab ? 'nav-tab-active' : ''}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === tab 
+                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'
+                  }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>

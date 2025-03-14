@@ -1,0 +1,13 @@
+opencv-python>=4.8.1.78
+numpy>=1.26.0
+pillow>=9.5.0
+openai>=1.12.0
+openai-agents==0.0.3
+flask==2.3.3
+flask-cors==4.0.0
+python-dotenv==1.0.0
+requests==2.31.0
+google-cloud-aiplatform>=1.36.0
+google-api-python-client>=2.100.0
+google-auth>=2.22.0
+google-generativeai>=0.3.0 

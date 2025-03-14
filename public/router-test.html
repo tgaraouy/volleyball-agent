@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Router Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .router-view-container {
+            min-height: 300px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container py-4">
+        <h1>Vue Router Test</h1>
+        <p>This page tests if Vue Router is working correctly.</p>
+        
+        <div class="card mb-4">
+            <div class="card-header">Navigation</div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <router-link to="/" class="btn btn-outline-primary">Home</router-link>
+                    <router-link to="/page1" class="btn btn-outline-primary">Page 1</router-link>
+                    <router-link to="/page2" class="btn btn-outline-primary">Page 2</router-link>
+                </div>
+            </div>
+        </div>
+        
+        <div class="router-view-container">
+            <router-view></router-view>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">Debug Info</div>
+            <div class="card-body">
+                <p>Current Route: <span class="badge bg-info">{{ $route.path }}</span></p>
+                <p>Router Initialized: <span class="badge" :class="$router ? 'bg-success' : 'bg-danger'">{{ $router ? 'Yes' : 'No' }}</span></p>
+                <div v-if="error" class="alert alert-danger">{{ error }}</div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="/" class="btn btn-secondary">Back to Main App</a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-router@3.5.3"></script>
+    <script>
+        // Define components
+        const Home = { template: '<div><h2>Home Page</h2><p>This is the home page.</p></div>' };
+        const Page1 = { template: '<div><h2>Page 1</h2><p>This is page 1.</p></div>' };
+        const Page2 = { template: '<div><h2>Page 2</h2><p>This is page 2.</p></div>' };
+        
+        // Define routes
+        const routes = [
+            { path: '/', component: Home },
+            { path: '/page1', component: Page1 },
+            { path: '/page2', component: Page2 }
+        ];
+        
+        // Create router instance
+        const router = new VueRouter({
+            routes
+        });
+        
+        // Create Vue instance
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+            
+            try {
+                window.app = new Vue({
+                    el: '#app',
+                    router: router,
+                    data: {
+                        error: null
+                    },
+                    created() {
+                        console.log('Vue instance created');
+                        console.log('Router initialized:', !!this.$router);
+                    },
+                    mounted() {
+                        console.log('Vue instance mounted');
+                        console.log('Current route:', this.$route.path);
+                        
+                        // Check if router-view is rendering
+                        const routerView = document.querySelector('.router-view-container router-view');
+                        if (!routerView) {
+                            console.warn('Router view element not found with querySelector');
+                            // Try alternative selector
+                            const routerViewAlt = document.getElementsByTagName('router-view')[0];
+                            console.log('Router view element (alt method):', routerViewAlt);
+                            
+                            if (!routerViewAlt) {
+                                console.error('Router view element not found!');
+                                this.error = 'Router view element not found. This may be why UI elements are not displaying.';
+                            }
+                        } else {
+                            console.log('Router view element found:', routerView);
+                        }
+                    }
+                });
+                
+                console.log('Vue app initialized successfully');
+            } catch (err) {
+                console.error('Error initializing Vue app:', err);
+                document.querySelector('#app').innerHTML = `
+                    <div class="alert alert-danger">
+                        <h4>Error Initializing Vue</h4>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

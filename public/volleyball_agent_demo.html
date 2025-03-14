@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball Agent Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #4a76a8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #4a76a8;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #4a76a8;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #3a5a78;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="file"] {
+            display: block;
+            margin-top: 5px;
+        }
+        .result {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .loading img {
+            width: 50px;
+            height: 50px;
+        }
+        .nav-link {
+            display: inline-block;
+            margin-right: 10px;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Volleyball Agent Demo</h1>
+            <p>Powered by OpenAI Agents</p>
+            <div>
+                <a href="/" class="nav-link">Home</a>
+                <a href="#" class="nav-link" onclick="showTab('video-analysis')">Video Analysis</a>
+                <a href="#" class="nav-link" onclick="showTab('real-time-feedback')">Real-time Feedback</a>
+                <a href="#" class="nav-link" onclick="showTab('training-program')">Training Program</a>
+                <a href="#" class="nav-link" onclick="showTab('team-analysis')">Team Analysis</a>
+            </div>
+        </header>
+
+        <div id="video-analysis" class="tab-content active">
+            <div class="card">
+                <h2>Video Analysis</h2>
+                <p>Upload a volleyball video for comprehensive analysis by our AI agents.</p>
+                
+                <div class="form-group">
+                    <label for="player-id">Player ID:</label>
+                    <input type="text" id="player-id" placeholder="Enter player ID">
+                </div>
+                
+                <div class="form-group">
+                    <label for="player-name">Player Name:</label>
+                    <input type="text" id="player-name" placeholder="Enter player name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="player-position">Position:</label>
+                    <select id="player-position">
+                        <option value="outside_hitter">Outside Hitter</option>
+                        <option value="middle_blocker">Middle Blocker</option>
+                        <option value="setter">Setter</option>
+                        <option value="opposite">Opposite</option>
+                        <option value="libero">Libero</option>
+                        <option value="defensive_specialist">Defensive Specialist</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="player-skill">Skill Level:</label>
+                    <select id="player-skill">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="elite">Elite</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="video-upload-agent">Upload Video:</label>
+                    <input type="file" id="video-upload-agent" accept="video/*">
+                </div>
+                
+                <button class="btn" onclick="analyzeVideoWithAgent()">Analyze Video</button>
+                
+                <div id="agent-video-loading" class="loading">
+                    <p>Analyzing video (this may take a few minutes)...</p>
+                </div>
+                
+                <div id="agent-video-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div id="real-time-feedback" class="tab-content">
+            <div class="card">
+                <h2>Real-time Feedback</h2>
+                <p>Get immediate feedback on volleyball techniques from a single frame.</p>
+                
+                <div class="form-group">
+                    <label for="frame-upload">Upload Frame:</label>
+                    <input type="file" id="frame-upload" accept="image/*">
+                </div>
+                
+                <div class="form-group">
+                    <label for="current-time">Current Time (seconds):</label>
+                    <input type="number" id="current-time" value="0" min="0" step="0.1">
+                </div>
+                
+                <button class="btn" onclick="getRealTimeFeedback()">Get Feedback</button>
+                
+                <div id="feedback-loading" class="loading">
+                    <p>Getting feedback...</p>
+                </div>
+                
+                <div id="feedback-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div id="training-program" class="tab-content">
+            <div class="card">
+                <h2>Training Program Generator</h2>
+                <p>Generate a personalized training program based on player needs.</p>
+                
+                <div class="form-group">
+                    <label for="training-player-id">Player ID:</label>
+                    <input type="text" id="training-player-id" placeholder="Enter player ID">
+                </div>
+                
+                <div class="form-group">
+                    <label for="technique-focus">Technique Focus:</label>
+                    <select id="technique-focus">
+                        <option value="">General (All Techniques)</option>
+                        <option value="serve">Serve</option>
+                        <option value="pass">Pass</option>
+                        <option value="set">Set</option>
+                        <option value="spike">Spike</option>
+                        <option value="block">Block</option>
+                        <option value="dig">Dig</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="generateTrainingProgram()">Generate Program</button>
+                
+                <div id="training-loading" class="loading">
+                    <p>Generating training program...</p>
+                </div>
+                
+                <div id="training-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div id="team-analysis" class="tab-content">
+            <div class="card">
+                <h2>Team Performance Analysis</h2>
+                <p>Analyze team performance and get recommendations for improvement.</p>
+                
+                <div class="form-group">
+                    <label for="team-id">Team ID:</label>
+                    <input type="text" id="team-id" placeholder="Enter team ID">
+                </div>
+                
+                <div class="form-group">
+                    <label for="game-data">Game Data (JSON):</label>
+                    <textarea id="game-data" rows="5" placeholder="Enter game data in JSON format (optional)"></textarea>
+                </div>
+                
+                <button class="btn" onclick="analyzeTeamPerformance()">Analyze Team</button>
+                
+                <div id="team-loading" class="loading">
+                    <p>Analyzing team performance...</p>
+                </div>
+                
+                <div id="team-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab navigation
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Video analysis with agent
+        function analyzeVideoWithAgent() {
+            const fileInput = document.getElementById('video-upload-agent');
+            const playerId = document.getElementById('player-id').value;
+            const playerName = document.getElementById('player-name').value;
+            const playerPosition = document.getElementById('player-position').value;
+            const playerSkill = document.getElementById('player-skill').value;
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a video to upload');
+                return;
+            }
+            
+            if (!playerId) {
+                alert('Please enter a player ID');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const videoData = e.target.result;
+                
+                const requestData = {
+                    video_data: videoData,
+                    player_data: {
+                        playerId: playerId,
+                        name: playerName,
+                        position: playerPosition,
+                        skillLevel: playerSkill
+                    }
+                };
+                
+                // Show loading indicator
+                document.getElementById('agent-video-loading').style.display = 'block';
+                document.getElementById('agent-video-result').style.display = 'none';
+                
+                fetch('/api/volleyball-agent/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    document.getElementById('agent-video-loading').style.display = 'none';
+                    
+                    // Display result
+                    const resultElement = document.getElementById('agent-video-result');
+                    resultElement.textContent = JSON.stringify(data, null, 2);
+                    resultElement.style.display = 'block';
+                })
+                .catch(error => {
+                    // Hide loading indicator
+                    document.getElementById('agent-video-loading').style.display = 'none';
+                    
+                    // Display error
+                    const resultElement = document.getElementById('agent-video-result');
+                    resultElement.textContent = 'Error: ' + error.message;
+                    resultElement.style.display = 'block';
+                });
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Real-time feedback
+        function getRealTimeFeedback() {
+            const fileInput = document.getElementById('frame-upload');
+            const currentTime = document.getElementById('current-time').value;
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select an image to upload');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const frameData = e.target.result;
+                
+                const requestData = {
+                    frame_data: frameData,
+                    current_time: parseFloat(currentTime)
+                };
+                
+                // Show loading indicator
+                document.getElementById('feedback-loading').style.display = 'block';
+                document.getElementById('feedback-result').style.display = 'none';
+                
+                fetch('/api/volleyball-agent/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    document.getElementById('feedback-loading').style.display = 'none';
+                    
+                    // Display result
+                    const resultElement = document.getElementById('feedback-result');
+                    resultElement.textContent = JSON.stringify(data, null, 2);
+                    resultElement.style.display = 'block';
+                })
+                .catch(error => {
+                    // Hide loading indicator
+                    document.getElementById('feedback-loading').style.display = 'none';
+                    
+                    // Display error
+                    const resultElement = document.getElementById('feedback-result');
+                    resultElement.textContent = 'Error: ' + error.message;
+                    resultElement.style.display = 'block';
+                });
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Generate training program
+        function generateTrainingProgram() {
+            const playerId = document.getElementById('training-player-id').value;
+            const techniqueFocus = document.getElementById('technique-focus').value;
+            
+            if (!playerId) {
+                alert('Please enter a player ID');
+                return;
+            }
+            
+            const requestData = {
+                player_id: playerId,
+                technique_focus: techniqueFocus
+            };
+            
+            // Show loading indicator
+            document.getElementById('training-loading').style.display = 'block';
+            document.getElementById('training-result').style.display = 'none';
+            
+            fetch('/api/volleyball-agent/training', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                document.getElementById('training-loading').style.display = 'none';
+                
+                // Display result
+                const resultElement = document.getElementById('training-result');
+                resultElement.textContent = JSON.stringify(data, null, 2);
+                resultElement.style.display = 'block';
+            })
+            .catch(error => {
+                // Hide loading indicator
+                document.getElementById('training-loading').style.display = 'none';
+                
+                // Display error
+                const resultElement = document.getElementById('training-result');
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.style.display = 'block';
+            });
+        }
+
+        // Analyze team performance
+        function analyzeTeamPerformance() {
+            const teamId = document.getElementById('team-id').value;
+            const gameDataText = document.getElementById('game-data').value;
+            
+            if (!teamId) {
+                alert('Please enter a team ID');
+                return;
+            }
+            
+            let gameData = null;
+            if (gameDataText) {
+                try {
+                    gameData = JSON.parse(gameDataText);
+                } catch (error) {
+                    alert('Invalid JSON format for game data');
+                    return;
+                }
+            }
+            
+            const requestData = {
+                team_id: teamId,
+                game_data: gameData
+            };
+            
+            // Show loading indicator
+            document.getElementById('team-loading').style.display = 'block';
+            document.getElementById('team-result').style.display = 'none';
+            
+            fetch('/api/volleyball-agent/team-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                document.getElementById('team-loading').style.display = 'none';
+                
+                // Display result
+                const resultElement = document.getElementById('team-result');
+                resultElement.textContent = JSON.stringify(data, null, 2);
+                resultElement.style.display = 'block';
+            })
+            .catch(error => {
+                // Hide loading indicator
+                document.getElementById('team-loading').style.display = 'none';
+                
+                // Display error
+                const resultElement = document.getElementById('team-result');
+                resultElement.textContent = 'Error: ' + error.message;
+                resultElement.style.display = 'block';
+            });
+        }
+
+        // Check if the server is running
+        fetch('/api/health')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server status:', data);
+                if (!data.openai_integration) {
+                    alert('Warning: OpenAI integration is not configured. Some features may not work.');
+                }
+            })
+            .catch(error => {
+                console.error('Failed to connect to server:', error);
+                alert('Error: Could not connect to the server. Please make sure the server is running.');
+            });
+    </script>
+</body>
+</html> 

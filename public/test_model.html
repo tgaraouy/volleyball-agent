@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Volleyball Technique Classifier Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: #f5f9fc;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .result-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .technique-bar {
+            height: 20px;
+            background-color: #3498db;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        
+        .technique-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .technique-label {
+            width: 200px;
+            font-size: 14px;
+        }
+        
+        .technique-value {
+            width: 50px;
+            text-align: right;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .bar-container {
+            flex-grow: 1;
+            background-color: #eee;
+            border-radius: 3px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Volleyball Technique Classifier Test</h1>
+        
+        <div class="status" id="status">Loading model...</div>
+        
+        <button id="testButton" class="btn" disabled>Test with Random Input</button>
+        
+        <div class="result-container" id="resultContainer" style="display: none;">
+            <h2>Test Results</h2>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let model;
+        let labels = {
+            "0": "attack_tempo", 
+            "1": "back_attack_defense", 
+            "2": "defense_set_attack", 
+            "3": "individual_defense", 
+            "4": "jump_training", 
+            "5": "offense_defense_transition", 
+            "6": "power_hitting", 
+            "7": "serve_pass", 
+            "8": "team_communication", 
+            "9": "transition", 
+            "10": "transition_offense"
+        };
+        
+        // Function to update status
+        function updateStatus(message) {
+            const statusElement = document.getElementById('status');
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+            console.log('Status:', message);
+        }
+        
+        // Function to load the model
+        async function loadModel() {
+            try {
+                updateStatus('Loading model from web_model/model.json...');
+                
+                // Load the model
+                model = await tf.loadLayersModel('web_model/model.json');
+                console.log('Model loaded successfully:', model);
+                
+                // Try to load labels
+                try {
+                    const response = await fetch('web_model/labels.json');
+                    if (response.ok) {
+                        labels = await response.json();
+                        console.log('Labels loaded:', labels);
+                    } else {
+                        console.warn('Could not load labels.json, using default labels');
+                    }
+                } catch (labelError) {
+                    console.warn('Error loading labels:', labelError);
+                }
+                
+                // Test the model with a dummy input
+                const inputShape = model.inputs[0].shape;
+                console.log('Model input shape:', inputShape);
+                
+                const dummyInput = tf.ones([1, inputShape[1]]);
+                const dummyOutput = model.predict(dummyInput);
+                console.log('Model prediction shape:', dummyOutput.shape);
+                
+                // Clean up tensors
+                dummyInput.dispose();
+                dummyOutput.dispose();
+                
+                updateStatus('Model loaded successfully!');
+                
+                // Enable the test button
+                document.getElementById('testButton').disabled = false;
+                
+                return model;
+            } catch (error) {
+                console.error('Error loading model:', error);
+                updateStatus('Error loading model: ' + error.message);
+                return null;
+            }
+        }
+        
+        // Function to test the model with random input
+        async function testModel() {
+            if (!model) {
+                updateStatus('Model not loaded');
+                return;
+            }
+            
+            try {
+                // Get the input shape from the model
+                const inputShape = model.inputs[0].shape;
+                const inputDim = inputShape[1];
+                
+                // Create a random input tensor
+                const randomInput = tf.randomNormal([1, inputDim]);
+                
+                // Make a prediction
+                updateStatus('Making prediction...');
+                const prediction = model.predict(randomInput);
+                const predictionData = await prediction.data();
+                
+                // Display the results
+                displayResults(predictionData);
+                
+                // Clean up tensors
+                randomInput.dispose();
+                prediction.dispose();
+                
+                updateStatus('Prediction complete!');
+            } catch (error) {
+                console.error('Error testing model:', error);
+                updateStatus('Error testing model: ' + error.message);
+            }
+        }
+        
+        // Function to display the results
+        function displayResults(predictionData) {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            
+            // Find the class with the highest probability
+            let maxProb = 0;
+            let maxIndex = 0;
+            
+            for (let i = 0; i < predictionData.length; i++) {
+                if (predictionData[i] > maxProb) {
+                    maxProb = predictionData[i];
+                    maxIndex = i;
+                }
+            }
+            
+            // Create an array of techniques with their probabilities
+            const techniques = [];
+            for (let i = 0; i < predictionData.length; i++) {
+                techniques.push({
+                    index: i,
+                    label: labels[i] || `Class ${i}`,
+                    probability: predictionData[i]
+                });
+            }
+            
+            // Sort by probability (descending)
+            techniques.sort((a, b) => b.probability - a.probability);
+            
+            // Create the HTML content
+            let html = `
+                <h3>Predicted Technique: ${labels[maxIndex] || `Class ${maxIndex}`}</h3>
+                <p>Confidence: ${(maxProb * 100).toFixed(2)}%</p>
+                <h4>All Techniques:</h4>
+            `;
+            
+            // Add bars for each technique
+            for (const technique of techniques) {
+                const percentage = technique.probability * 100;
+                html += `
+                    <div class="technique-item">
+                        <div class="technique-label">${technique.label}</div>
+                        <div class="bar-container">
+                            <div class="technique-bar" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="technique-value">${percentage.toFixed(2)}%</div>
+                    </div>
+                `;
+            }
+            
+            // Add model information
+            html += `
+                <h4>Model Information:</h4>
+                <p>Input shape: [1, ${model.inputs[0].shape[1]}]</p>
+                <p>Output shape: [1, ${predictionData.length}]</p>
+            `;
+            
+            // Update the content and show the container
+            resultContent.innerHTML = html;
+            resultContainer.style.display = 'block';
+        }
+        
+        // Initialize when the page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            // Load the model
+            loadModel();
+            
+            // Set up the test button
+            document.getElementById('testButton').addEventListener('click', testModel);
+        });
+    </script>
+</body>
+</html> 

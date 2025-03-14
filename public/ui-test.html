@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Test Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container py-4">
+        <h1>UI Test Page</h1>
+        <p>This page tests different UI components to diagnose rendering issues.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Pure HTML Form (No Vue)</h5>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" placeholder="Enter name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" placeholder="Enter email">
+                            </div>
+                            <div class="mb-3">
+                                <label for="position" class="form-label">Position</label>
+                                <select class="form-select" id="position">
+                                    <option value="">Select position</option>
+                                    <option value="Outside Hitter">Outside Hitter</option>
+                                    <option value="Middle Blocker">Middle Blocker</option>
+                                    <option value="Setter">Setter</option>
+                                    <option value="Libero">Libero</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div id="vue-test" class="card mb-4">
+                    <div class="card-header">
+                        <h5>Vue Form</h5>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="vue-name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="vue-name" v-model="name" placeholder="Enter name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="vue-email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="vue-email" v-model="email" placeholder="Enter email">
+                            </div>
+                            <div class="mb-3">
+                                <label for="vue-position" class="form-label">Position</label>
+                                <select class="form-select" id="vue-position" v-model="position">
+                                    <option value="">Select position</option>
+                                    <option v-for="pos in positions" :value="pos">{{ pos }}</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" @click="submitForm">Submit</button>
+                        </form>
+                        
+                        <div class="mt-3">
+                            <h6>Form Data:</h6>
+                            <pre>{{ formData }}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Console Output</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="console-output" class="bg-dark text-light p-3 rounded" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
+                            <div id="console-messages">
+                                <!-- Console messages will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="/" class="btn btn-secondary">Back to Main App</a>
+            <a href="/debug.html" class="btn btn-info ms-2">Go to Debug Page</a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script>
+        // Override console methods to display in the UI
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+        
+        function addConsoleMessage(type, args) {
+            const consoleMessages = document.getElementById('console-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `console-${type}`;
+            
+            let messageContent = '';
+            for (const arg of args) {
+                if (typeof arg === 'object') {
+                    try {
+                        messageContent += JSON.stringify(arg, null, 2) + ' ';
+                    } catch (e) {
+                        messageContent += arg + ' ';
+                    }
+                } else {
+                    messageContent += arg + ' ';
+                }
+            }
+            
+            messageDiv.innerHTML = `<span class="console-time">[${new Date().toLocaleTimeString()}]</span> <span class="console-${type}-badge">${type.toUpperCase()}</span>: ${messageContent}`;
+            
+            if (type === 'error') {
+                messageDiv.style.color = '#ff5252';
+            } else if (type === 'warn') {
+                messageDiv.style.color = '#ffab40';
+            } else if (type === 'info') {
+                messageDiv.style.color = '#2196f3';
+            }
+            
+            consoleMessages.appendChild(messageDiv);
+            consoleMessages.scrollTop = consoleMessages.scrollHeight;
+        }
+        
+        console.log = function() {
+            originalConsole.log.apply(console, arguments);
+            addConsoleMessage('log', arguments);
+        };
+        
+        console.error = function() {
+            originalConsole.error.apply(console, arguments);
+            addConsoleMessage('error', arguments);
+        };
+        
+        console.warn = function() {
+            originalConsole.warn.apply(console, arguments);
+            addConsoleMessage('warn', arguments);
+        };
+        
+        console.info = function() {
+            originalConsole.info.apply(console, arguments);
+            addConsoleMessage('info', arguments);
+        };
+        
+        // Create Vue instance
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing Vue...');
+            
+            try {
+                window.vueTest = new Vue({
+                    el: '#vue-test',
+                    data: {
+                        name: '',
+                        email: '',
+                        position: '',
+                        positions: [
+                            'Outside Hitter',
+                            'Middle Blocker',
+                            'Setter',
+                            'Libero',
+                            'Defensive Specialist',
+                            'Opposite Hitter'
+                        ]
+                    },
+                    computed: {
+                        formData() {
+                            return {
+                                name: this.name,
+                                email: this.email,
+                                position: this.position
+                            };
+                        }
+                    },
+                    methods: {
+                        submitForm() {
+                            console.log('Form submitted:', this.formData);
+                            alert('Form submitted: ' + JSON.stringify(this.formData));
+                        }
+                    },
+                    mounted() {
+                        console.log('Vue instance mounted');
+                    }
+                });
+                
+                console.info('Vue initialized successfully');
+            } catch (err) {
+                console.error('Error initializing Vue:', err);
+            }
+        });
+    </script>
+</body>
+</html> 

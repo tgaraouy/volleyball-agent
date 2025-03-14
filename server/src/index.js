@@ -3,11 +3,13 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { config } = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
-const { ManusAIService } = require('./ai/ManusAIService');
+const ManusAIService = require('./ai/ManusAIService');
 const { VolleyballProgramProtocol } = require('./protocols/VolleyballProgramProtocol');
+const path = require('path');
+const techniqueAnalysisRoutes = require('./routes/techniqueAnalysis');
 
-// Load environment variables
-config();
+// Load environment variables from root directory
+config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 
@@ -15,6 +17,10 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Initialize services
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
@@ -23,7 +29,7 @@ console.log('Current directory:', __dirname);
 console.log('Environment variables:');
 console.log('OPENAI_API_KEY length:', process.env.OPENAI_API_KEY?.length);
 console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'Present' : 'Missing');
-console.log('PORT:', process.env.PORT || 3001);
+console.log('PORT:', process.env.PORT || 3000);
 
 // Initialize AI service if OpenAI key is available
 let aiService = null;
@@ -112,8 +118,17 @@ app.post('/api/ai/fundraising/:campaignId/recommendations', async (req, res) => 
   }
 });
 
+// Routes
+app.use('/api', techniqueAnalysisRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+});
+
 // Start the server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Volleyball program agent server running on port ${PORT}`);
   if (!process.env.HTTPS) {

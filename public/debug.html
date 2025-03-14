@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball App Debug</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div id="debug-app" class="container py-4">
+        <h1>Volleyball App Debug</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">Vue Status</div>
+            <div class="card-body">
+                <p>Vue Loaded: <span v-if="vueLoaded" class="badge bg-success">Yes</span><span v-else class="badge bg-danger">No</span></p>
+                <p>Message: <span>{{ message }}</span></p>
+                <button class="btn btn-primary" @click="testVue">Test Vue</button>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">Supabase Status</div>
+            <div class="card-body">
+                <p>Supabase Loaded: <span v-if="supabaseLoaded" class="badge bg-success">Yes</span><span v-else class="badge bg-danger">No</span></p>
+                <p>Connection Status: <span class="badge" :class="{'bg-success': supabaseStatus === 'Connected', 'bg-warning': supabaseStatus === 'Testing...', 'bg-danger': supabaseStatus === 'Error'}">{{ supabaseStatus }}</span></p>
+                <button class="btn btn-primary" @click="testSupabase">Test Supabase</button>
+                <div v-if="supabaseError" class="alert alert-danger mt-3">
+                    {{ supabaseError }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Database Tables</div>
+            <div class="card-body">
+                <button class="btn btn-primary mb-3" @click="checkTables">Check Tables</button>
+                <div v-if="tablesLoading" class="d-flex align-items-center">
+                    <div class="spinner-border me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span>Loading tables...</span>
+                </div>
+                <div v-if="tablesError" class="alert alert-danger">
+                    {{ tablesError }}
+                </div>
+                <ul v-if="tables.length > 0" class="list-group">
+                    <li v-for="table in tables" :key="table.name" class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ table.name }}
+                        <span class="badge" :class="{'bg-success': !table.count.toString().includes('Error'), 'bg-danger': table.count.toString().includes('Error')}">
+                            {{ table.count }} {{ !table.count.toString().includes('Error') ? 'records' : '' }}
+                        </span>
+                    </li>
+                </ul>
+                <p v-else-if="!tablesLoading && !tablesError" class="text-muted">No tables found or not checked yet.</p>
+                
+                <div class="mt-4">
+                    <a href="/setup.html" class="btn btn-info">Go to Setup Guide</a>
+                    <a href="/" class="btn btn-secondary ms-2">Back to Main App</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+        // Initialize Supabase client
+        let supabase;
+        try {
+            const supabaseUrl = 'https://taygbewanmzrdspnidxe.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRheWdiZXdhbm16cmRzcG5pZHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NTc3ODEsImV4cCI6MjA1NzEzMzc4MX0.WUpR6n12W-6AmgQLSmGW07E2FSwBoE5QJwYiZ8N-NMw';
+            supabase = supabase.createClient(supabaseUrl, supabaseKey);
+            console.log('Supabase initialized in debug page');
+        } catch (err) {
+            console.error('Error initializing Supabase:', err);
+        }
+
+        // Create Vue instance
+        document.addEventListener('DOMContentLoaded', function() {
+            window.debugApp = new Vue({
+                el: '#debug-app',
+                data: {
+                    vueLoaded: true,
+                    message: 'Vue is working!',
+                    supabaseLoaded: !!supabase,
+                    supabaseStatus: 'Not tested',
+                    supabaseError: null,
+                    tables: [],
+                    tablesLoading: false,
+                    tablesError: null
+                },
+                methods: {
+                    testVue() {
+                        this.message = 'Vue is working! Clicked at ' + new Date().toLocaleTimeString();
+                    },
+                    async testSupabase() {
+                        try {
+                            this.supabaseStatus = 'Testing...';
+                            this.supabaseError = null;
+                            
+                            // Simple health check without using count()
+                            const { data, error } = await supabase.from('players').select('*').limit(1);
+                            
+                            if (error) {
+                                this.supabaseStatus = 'Error';
+                                this.supabaseError = error.message;
+                            } else {
+                                this.supabaseStatus = 'Connected';
+                            }
+                        } catch (err) {
+                            this.supabaseStatus = 'Error';
+                            this.supabaseError = err.message;
+                        }
+                    },
+                    async checkTables() {
+                        this.tablesLoading = true;
+                        this.tablesError = null;
+                        this.tables = [];
+                        
+                        try {
+                            const tableNames = [
+                                'players', 
+                                'development_plans',
+                                'tryouts', 
+                                'drills', 
+                                'fundraising_campaigns',
+                                'parent_interest',
+                                'newsletter_subscriptions'
+                            ];
+                            
+                            for (const tableName of tableNames) {
+                                try {
+                                    // Get all rows but limit to 0 to just check if table exists
+                                    const { data, error } = await supabase
+                                        .from(tableName)
+                                        .select('*')
+                                        .limit(0);
+                                    
+                                    if (error) {
+                                        this.tables.push({
+                                            name: tableName,
+                                            count: 'Error: ' + error.message
+                                        });
+                                    } else {
+                                        // Now get all rows to count them
+                                        const { data: allData, error: countError } = await supabase
+                                            .from(tableName)
+                                            .select('*');
+                                        
+                                        if (countError) {
+                                            this.tables.push({
+                                                name: tableName,
+                                                count: 'Error counting: ' + countError.message
+                                            });
+                                        } else {
+                                            this.tables.push({
+                                                name: tableName,
+                                                count: allData ? allData.length : 0
+                                            });
+                                        }
+                                    }
+                                } catch (err) {
+                                    this.tables.push({
+                                        name: tableName,
+                                        count: 'Error: ' + err.message
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            this.tablesError = err.message;
+                        } finally {
+                            this.tablesLoading = false;
+                        }
+                    }
+                },
+                mounted() {
+                    console.log('Debug app mounted');
+                    // Automatically test Supabase connection when the page loads
+                    this.testSupabase();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

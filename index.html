@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball Technique Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@3.18.0"></script>
+    <script src="feature_extractor.js"></script>
+    <script src="volleyball_model.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .video-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #videoElement {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        #canvas {
+            display: none;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            text-align: center;
+        }
+        .upload-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        #fileInput {
+            display: none;
+        }
+        .upload-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .upload-label:hover {
+            background-color: #218838;
+        }
+        #progress {
+            margin-top: 10px;
+            height: 4px;
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+        #progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: #007bff;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Volleyball Technique Classifier</h1>
+        
+        <div class="upload-container">
+            <label for="fileInput" class="upload-label">
+                Upload Video
+            </label>
+            <input type="file" id="fileInput" accept="video/*">
+            <div id="progress">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+        
+        <div class="video-container">
+            <video id="videoElement" controls></video>
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn" disabled>Start Analysis</button>
+            <button id="stopBtn" disabled>Stop</button>
+        </div>
+        
+        <div id="result">
+            Upload a video to begin analysis
+        </div>
+    </div>
+
+    <script>
+        let volleyballModel;
+        let featureExtractor;
+        let isAnalyzing = false;
+        
+        const videoElement = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fileInput = document.getElementById('fileInput');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resultDiv = document.getElementById('result');
+        const progressBar = document.getElementById('progress-bar');
+        const progress = document.getElementById('progress');
+
+        // Load the model and labels
+        async function initialize() {
+            try {
+                resultDiv.textContent = 'Loading model...';
+                
+                // Initialize model
+                volleyballModel = new VolleyballModel();
+                const success = await volleyballModel.loadModel();
+                
+                if (!success) {
+                    throw new Error('Failed to load model');
+                }
+                
+                // Initialize feature extractor
+                featureExtractor = new FeatureExtractor();
+                
+                resultDiv.textContent = 'Ready to analyze videos';
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                resultDiv.textContent = 'Error loading model or labels. Please try again later.';
+            }
+        }
+
+        // Process video frames
+        async function processFrame() {
+            if (!isAnalyzing || videoElement.paused || videoElement.ended) {
+                return;
+            }
+
+            try {
+                // Draw current frame to canvas
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                ctx.drawImage(videoElement, 0, 0);
+                
+                // Extract features
+                const features = await featureExtractor.extractFeatures(canvas);
+                
+                // Make prediction using our model
+                const result = await volleyballModel.predict(features);
+                
+                // Update result
+                resultDiv.textContent = `Technique: ${result.technique} (${(result.confidence * 100).toFixed(2)}% confidence)`;
+                
+                // Update progress bar
+                const progressValue = (videoElement.currentTime / videoElement.duration) * 100;
+                progressBar.style.width = `${progressValue}%`;
+            } catch (error) {
+                console.error('Error processing frame:', error);
+            }
+
+            requestAnimationFrame(processFrame);
+        }
+
+        // Event listeners
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                videoElement.src = url;
+                startBtn.disabled = false;
+                progress.style.display = 'block';
+                progressBar.style.width = '0%';
+            }
+        });
+
+        startBtn.addEventListener('click', () => {
+            if (!volleyballModel || !featureExtractor) {
+                resultDiv.textContent = 'Please wait for initialization to complete...';
+                return;
+            }
+            
+            isAnalyzing = true;
+            videoElement.play();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            processFrame();
+        });
+
+        stopBtn.addEventListener('click', () => {
+            isAnalyzing = false;
+            videoElement.pause();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        videoElement.addEventListener('ended', () => {
+            isAnalyzing = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        // Initialize
+        initialize();
+    </script>
+</body>
+</html> 

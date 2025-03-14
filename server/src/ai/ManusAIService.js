@@ -1,56 +1,101 @@
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 
 class ManusAIService {
-    constructor() {
-        const configuration = new Configuration({
-            apiKey: process.env.OPENAI_API_KEY,
+    constructor(config = {}) {
+        this.openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
         });
-        this.openai = new OpenAIApi(configuration);
+        
+        this.model = config.model || 'gpt-4';
+        this.systemInstructions = config.systemInstructions || 'You are an AI assistant specializing in volleyball technique analysis and training.';
     }
 
-    async generateDevelopmentPlan(playerData) {
+    async generateResponse(prompt, context = {}) {
         try {
-            const response = await this.openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a professional volleyball coach specializing in player development."
-                    },
-                    {
-                        role: "user",
-                        content: `Create a development plan for a player with the following attributes: ${JSON.stringify(playerData)}`
-                    }
-                ]
+            const messages = [
+                { role: 'system', content: this.systemInstructions },
+                { role: 'user', content: prompt }
+            ];
+
+            if (context.previousMessages) {
+                messages.splice(1, 0, ...context.previousMessages);
+            }
+
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 500
             });
-            return response.data.choices[0].message.content;
+
+            return response.choices[0].message.content;
         } catch (error) {
-            console.error('Error generating development plan:', error);
-            throw new Error('Failed to generate development plan');
+            console.error('Error generating AI response:', error);
+            throw new Error('Failed to generate AI response');
         }
     }
 
-    async optimizeSchedule(scheduleData) {
-        try {
-            const response = await this.openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a scheduling expert for volleyball programs."
-                    },
-                    {
-                        role: "user",
-                        content: `Optimize this volleyball schedule: ${JSON.stringify(scheduleData)}`
-                    }
-                ]
-            });
-            return response.data.choices[0].message.content;
-        } catch (error) {
-            console.error('Error optimizing schedule:', error);
-            throw new Error('Failed to optimize schedule');
+    async analyzeTechnique(videoContext, referenceData) {
+        const prompt = `
+            Analyze this volleyball technique based on the following context:
+            Video Description: ${videoContext}
+            
+            Compare against these key points:
+            ${referenceData.keyPoints.map(point => `- ${point}`).join('\n')}
+            
+            Expected Motions:
+            ${referenceData.expectedMotions.map(motion => `- ${motion}`).join('\n')}
+            
+            Please provide:
+            1. A score out of 10
+            2. Key observations about the technique
+            3. Specific recommendations for improvement
+        `;
+
+        const analysis = await this.generateResponse(prompt);
+        return this.parseAnalysis(analysis);
+    }
+
+    parseAnalysis(analysisText) {
+        // This is a simple implementation - you might want to make this more sophisticated
+        return {
+            formScore: this.extractScore(analysisText),
+            observations: this.extractObservations(analysisText),
+            recommendations: this.extractRecommendations(analysisText)
+        };
+    }
+
+    extractScore(text) {
+        // Simple score extraction - you might want to make this more sophisticated
+        const scoreMatch = text.match(/\b([0-9]|10)(\s*\/\s*10)\b/);
+        return scoreMatch ? parseInt(scoreMatch[1]) : 7;
+    }
+
+    extractObservations(text) {
+        // Extract observations between "observations" and "recommendations"
+        const observations = text.match(/observations:(.*?)recommendations:/is);
+        if (observations && observations[1]) {
+            return observations[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('-'))
+                .map(line => line.trim().substring(1).trim())
+                .filter(obs => obs.length > 0);
         }
+        return ['Good initial form', 'Room for improvement in technique'];
+    }
+
+    extractRecommendations(text) {
+        // Extract recommendations from the end of the text
+        const recommendations = text.match(/recommendations:(.*)/is);
+        if (recommendations && recommendations[1]) {
+            return recommendations[1]
+                .split('\n')
+                .filter(line => line.trim().startsWith('-'))
+                .map(line => line.trim().substring(1).trim())
+                .filter(rec => rec.length > 0);
+        }
+        return ['Practice maintaining proper form', 'Focus on consistent technique'];
     }
 }
 
-module.exports = { ManusAIService }; 
+module.exports = ManusAIService; 

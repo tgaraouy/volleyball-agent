@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball Analysis API Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #4a76a8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #4a76a8;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            margin-bottom: 30px;
+        }
+        .endpoint h3 {
+            color: #4a76a8;
+            margin-bottom: 5px;
+        }
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .method.post {
+            background-color: #49cc90;
+            color: white;
+        }
+        .method.get {
+            background-color: #61affe;
+            color: white;
+        }
+        .url {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .params {
+            margin-top: 15px;
+        }
+        .params h4 {
+            margin-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .response {
+            margin-top: 15px;
+        }
+        .response h4 {
+            margin-bottom: 5px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: monospace;
+        }
+        .nav-link {
+            display: inline-block;
+            margin-right: 10px;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Volleyball Analysis API Documentation</h1>
+            <p>API endpoints for volleyball technique analysis and training</p>
+            <div>
+                <a href="/" class="nav-link">Home</a>
+                <a href="/volleyball_ai_demo.html" class="nav-link">Google AI Demo</a>
+                <a href="/volleyball_agent_demo.html" class="nav-link">OpenAI Agents Demo</a>
+            </div>
+        </header>
+
+        <div class="card">
+            <h2>Introduction</h2>
+            <p>This API provides endpoints for analyzing volleyball techniques, generating training programs, and providing real-time feedback using artificial intelligence.</p>
+            <p>The API is divided into two main sections:</p>
+            <ul>
+                <li><strong>Google AI Integration</strong>: Endpoints for analyzing images, videos, and frames using Google's Gemini Pro Vision model.</li>
+                <li><strong>OpenAI Agents Integration</strong>: Endpoints for comprehensive analysis, real-time feedback, training programs, and team analysis using OpenAI's Agents SDK.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Google AI Integration Endpoints</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball/analyze-image</span></h3>
+                <p>Analyze a volleyball image using Google's Gemini Pro Vision model.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (multipart/form-data)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>image</td>
+                            <td>File</td>
+                            <td>Yes</td>
+                            <td>The volleyball image to analyze</td>
+                        </tr>
+                        <tr>
+                            <td>analysis_type</td>
+                            <td>String</td>
+                            <td>No</td>
+                            <td>Type of analysis to perform: "technique", "positioning", or "tactics" (default: "technique")</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "analysis": "Detailed analysis of the volleyball technique...",
+  "timestamp": "2023-10-15T14:30:00Z"
+}</pre>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball/analyze-video</span></h3>
+                <p>Analyze a volleyball video by processing frames at regular intervals.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (multipart/form-data)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>video</td>
+                            <td>File</td>
+                            <td>Yes</td>
+                            <td>The volleyball video to analyze</td>
+                        </tr>
+                        <tr>
+                            <td>analysis_type</td>
+                            <td>String</td>
+                            <td>No</td>
+                            <td>Type of analysis to perform: "technique", "positioning", or "tactics" (default: "technique")</td>
+                        </tr>
+                        <tr>
+                            <td>interval_seconds</td>
+                            <td>Number</td>
+                            <td>No</td>
+                            <td>Interval between frames to analyze in seconds (default: 2)</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "analysis_results": [
+    {
+      "timestamp": "00:02",
+      "analysis": "Detailed analysis of the volleyball technique..."
+    },
+    {
+      "timestamp": "00:04",
+      "analysis": "Detailed analysis of the volleyball technique..."
+    },
+    ...
+  ],
+  "summary": "Overall summary of the video analysis..."
+}</pre>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball/analyze-frame</span></h3>
+                <p>Analyze a single volleyball frame, useful for real-time analysis.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (multipart/form-data)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>frame</td>
+                            <td>File</td>
+                            <td>Yes</td>
+                            <td>The volleyball frame to analyze</td>
+                        </tr>
+                        <tr>
+                            <td>analysis_type</td>
+                            <td>String</td>
+                            <td>No</td>
+                            <td>Type of analysis to perform: "technique", "positioning", or "tactics" (default: "technique")</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "analysis": "Detailed analysis of the volleyball technique...",
+  "timestamp": "2023-10-15T14:30:00Z"
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>OpenAI Agents Integration Endpoints</h2>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball-agent/analyze</span></h3>
+                <p>Analyze a volleyball video using the OpenAI Agents system.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (application/json)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>video_data</td>
+                            <td>String</td>
+                            <td>Yes</td>
+                            <td>Base64 encoded video data</td>
+                        </tr>
+                        <tr>
+                            <td>player_data</td>
+                            <td>Object</td>
+                            <td>No</td>
+                            <td>Player information (playerId, name, position, skillLevel)</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "technique_analysis": [
+    {
+      "frame": 0,
+      "analysis": "Detailed analysis of the volleyball technique..."
+    },
+    ...
+  ],
+  "positioning_analysis": [...],
+  "tactical_analysis": [...]
+}</pre>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball-agent/feedback</span></h3>
+                <p>Get real-time feedback for a single video frame.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (application/json)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>frame_data</td>
+                            <td>String</td>
+                            <td>Yes</td>
+                            <td>Base64 encoded image data</td>
+                        </tr>
+                        <tr>
+                            <td>current_time</td>
+                            <td>Number</td>
+                            <td>No</td>
+                            <td>Current time in the video (seconds)</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "feedback": "Immediate, actionable feedback on the volleyball technique...",
+  "timestamp": 10.5
+}</pre>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball-agent/training</span></h3>
+                <p>Generate a personalized training program.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (application/json)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>player_id</td>
+                            <td>String</td>
+                            <td>Yes</td>
+                            <td>Player ID</td>
+                        </tr>
+                        <tr>
+                            <td>technique_focus</td>
+                            <td>String</td>
+                            <td>No</td>
+                            <td>Specific technique to focus on (e.g., "spike", "serve")</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "player_id": "player123",
+  "technique_focus": "spike",
+  "program": {
+    "title": "Personalized Spike Training Program",
+    "description": "This program is designed to improve your spiking technique...",
+    "drills": [
+      {
+        "name": "Warm-up Drill",
+        "description": "Start with a 10-minute warm-up...",
+        "duration": "10 minutes",
+        "intensity": "Low"
+      },
+      ...
+    ]
+  }
+}</pre>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method post">POST</span> <span class="url">/api/volleyball-agent/team-analysis</span></h3>
+                <p>Analyze team performance.</p>
+                
+                <div class="params">
+                    <h4>Request Parameters (application/json)</h4>
+                    <table>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>team_id</td>
+                            <td>String</td>
+                            <td>Yes</td>
+                            <td>Team ID</td>
+                        </tr>
+                        <tr>
+                            <td>game_data</td>
+                            <td>Object</td>
+                            <td>No</td>
+                            <td>Game data for analysis</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "team_id": "varsity_2025",
+  "analysis": {
+    "strengths": [
+      "Strong serving performance",
+      "Effective blocking at the net",
+      "Good communication between players"
+    ],
+    "weaknesses": [
+      "Inconsistent passing in serve receive",
+      "Defensive positioning needs improvement",
+      "Transition offense is slow"
+    ],
+    "recommendations": [
+      "Focus on serve receive drills in practice",
+      "Work on defensive positioning and movement",
+      "Practice faster transitions from defense to offense"
+    ]
+  }
+}</pre>
+                </div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method get">GET</span> <span class="url">/api/health</span></h3>
+                <p>Check the health status of the server and integrations.</p>
+                
+                <div class="response">
+                    <h4>Response (application/json)</h4>
+                    <pre>{
+  "status": "ok",
+  "message": "Server is running",
+  "google_ai_integration": true,
+  "openai_integration": true
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
