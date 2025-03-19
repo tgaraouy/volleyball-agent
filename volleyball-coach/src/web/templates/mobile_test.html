@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Volleyball Coach">
+    <meta name="theme-color" content="#4361ee">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Volleyball Coach</title>
+    
+    <!-- Core Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- iOS PWA icons -->
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/static/icons/icon-167x167.png">
+    
+    <!-- iOS splash screens -->
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1668-2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1536-2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-828-1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/static/splash/apple-splash-750-1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+    
+    <!-- Three.js for 3D visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <style>
+        /* Base styles optimized for mobile */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background-color: #f2f2f7;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        /* Improved container spacing for iPhone */
+        .container {
+            padding-left: max(15px, env(safe-area-inset-left));
+            padding-right: max(15px, env(safe-area-inset-right));
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Top app bar */
+        .app-header {
+            position: sticky;
+            top: 0;
+            background-color: #4361ee;
+            color: white;
+            padding: 15px;
+            padding-top: max(15px, env(safe-area-inset-top));
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .app-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* Video recording styles */
+        .video-container {
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            overflow: hidden;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        
+        #cameraView {
+            width: 100%;
+            max-height: 70vh;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+        }
+        
+        /* Improved floating capture button for better reach */
+        .capture-button-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .floating-capture-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #ff3b30;
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            position: absolute;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+        
+        .floating-capture-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .capture-label {
+            color: white;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .inner-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: white;
+        }
+        
+        /* Record mode styles */
+        .video-recording .floating-capture-btn {
+            background-color: #ff3b30;
+        }
+        
+        .video-recording .inner-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        /* Video controls style improvements */
+        .video-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 15px;
+            z-index: 20;
+        }
+        
+        .control-btn {
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .control-btn:active {
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        /* Video preview improvements */
+        .video-preview-container {
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #000;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        #videoPreview {
+            width: 100%;
+            display: block;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+        
+        /* Analysis loader */
+        .analysis-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(67, 97, 238, 0.3);
+            border-radius: 50%;
+            border-top-color: #4361ee;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Additional mobile-friendly styles */
+        .camera-card {
+            background-color: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            margin-bottom: 0;
+            border: none;
+        }
+        
+        #cameraView, #capturedImage {
+            width: 100%;
+            background-color: #000;
+            border-radius: 0;
+            margin: 0;
+            object-fit: cover;
+        }
+        
+        #cameraView {
+            aspect-ratio: 3/4;
+            max-height: 50vh;
+        }
+        
+        #capturedImage {
+            max-height: 300px;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+        }
+        
+        /* Action buttons */
+        .action-button {
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
+        }
+        
+        .action-button:active {
+            transform: scale(0.98);
+        }
+        
+        .action-button i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .primary-action {
+            background-color: #4361ee;
+            border-color: #4361ee;
+        }
+        
+        .secondary-action {
+            background-color: #3a86ff;
+            border-color: #3a86ff; 
+        }
+        
+        .tertiary-action {
+            background-color: #4895ef;
+            border-color: #4895ef;
+        }
+        
+        /* Card padding */
+        .card-padding {
+            padding: 20px;
+        }
+        
+        /* Results section */
+        .results-container {
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        /* Virtual coach section */
+        .coach-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .coach-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .coach-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        
+        .model-container {
+            background-color: #000;
+            border-radius: 12px;
+            aspect-ratio: 3/4;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .model-container canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .model-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .model-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.7;
+        }
+        
+        .feedback-item {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feedback-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .feedback-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            color: #4361ee;
+        }
+        
+        .feedback-title i {
+            margin-right: 8px;
+        }
+        
+        .feedback-content {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        .analysis-points {
+            margin-top: 15px;
+        }
+        
+        .analysis-point {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .analysis-point i {
+            margin-right: 10px;
+            color: #4361ee;
+            margin-top: 2px;
+        }
+        
+        .analysis-point.good {
+            background-color: rgba(46, 213, 115, 0.05);
+        }
+        
+        .analysis-point.good i {
+            color: #2ed573;
+        }
+        
+        .analysis-point.improve {
+            background-color: rgba(255, 71, 87, 0.05);
+        }
+        
+        .analysis-point.improve i {
+            color: #ff4757;
+        }
+        
+        .analysis-detail {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #444;
+        }
+        
+        .progress-bar-container {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #4361ee;
+            border-radius: 4px;
+        }
+        
+        .technique-score {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .technique-score-label {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        .technique-score-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .key-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .metric-card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        /* Logs container (hidden by default) */
+        #logContainer {
+            background-color: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: none;
+        }
+        
+        #logOutput {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+        
+        .log-entry {
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .log-error {
+            color: #e63946;
+        }
+        
+        .log-success {
+            color: #2a9d8f;
+        }
+        
+        /* Section title */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .section-caption {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        /* Analysis options */
+        .analysis-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .analysis-btn {
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: none;
+        }
+        
+        .analysis-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .analysis-btn:active {
+            transform: scale(0.97);
+        }
+        
+        /* iOS-specific improvements */
+        /* Prevent rubber-band scrolling */
+        html, body {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: auto;
+            width: 100%;
+            height: 100%;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Fix input field zoom on iOS */
+        input, select, textarea {
+            font-size: 16px;
+        }
+        
+        /* Prevent text selection on UI elements */
+        .btn, .frame-item, .floating-capture-btn, .app-header, .section-title {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Better tap highlights */
+        .btn:active, .frame-item:active, .floating-capture-btn:active {
+            opacity: 0.8;
+        }
+        
+        /* Responsive layout for iPhone */
+        @media screen and (max-width: 480px) {
+            .app-container {
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+                gap: 15px;
+            }
+            
+            .side-panel {
+                width: 100%;
+                max-height: 200px;
+                margin-bottom: 15px;
+                overflow-y: auto;
+            }
+            
+            .frame-list-container {
+                padding: 8px;
+            }
+            
+            .frame-list-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+            }
+            
+            .frame-item {
+                aspect-ratio: 1;
+            }
+            
+            .floating-capture-btn {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .analysis-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .analysis-btn {
+                min-height: auto;
+                padding: 10px;
+            }
+            
+            /* Adjust camera view for iPhone */
+            #cameraView, #capturedImage {
+                aspect-ratio: 4/3;  /* More natural for iPhone cameras */
+                max-height: 40vh;
+            }
+            
+            /* iPhone-specific UI enhancements */
+            .camera-card {
+                margin-bottom: 15px;
+            }
+            
+            .video-preview {
+                max-height: 40vh;
+                border: 2px solid rgba(67, 97, 238, 0.4);
+            }
+            
+            #videoPreviewCard {
+                margin-top: 15px;
+            }
+            
+            #videoPreviewCard .card-padding {
+                padding: 15px;
+            }
+            
+            /* Simplified buttons for mobile */
+            .analysis-btn {
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 50px;
+                margin-bottom: 8px;
+                white-space: nowrap;
+                font-weight: 600;
+            }
+            
+            /* More visible floating button */
+            .floating-capture-btn {
+                background: #1a73e8;
+            }
+            
+            /* Better typography for mobile */
+            .section-title {
+                font-size: 18px;
+            }
+            
+            .section-caption {
+                font-size: 14px;
+            }
+            
+            /* Improve modal display on iPhone */
+            .timeline-analysis {
+                padding: 10px;
+            }
+            
+            .timeline-item {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            
+            /* Better visibility for indicators */
+            .camera-status {
+                top: 10px;
+                left: 10px;
+                padding: 4px 8px;
+            }
+        }
+        
+        /* iPhone X+ notch support */
+        @supports (padding: max(0px)) {
+            .app-header {
+                padding-left: max(15px, env(safe-area-inset-left));
+                padding-right: max(15px, env(safe-area-inset-right));
+                padding-top: max(15px, env(safe-area-inset-top));
+            }
+            
+            .app-container {
+                padding-left: max(15px, env(safe-area-inset-left));
+                padding-right: max(15px, env(safe-area-inset-right));
+                padding-bottom: max(15px, env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* iOS Add to Home Screen banner */
+        .ios-install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 9999;
+            display: none;
+        }
+        
+        .ios-install-banner .banner-text {
+            flex: 1;
+            padding-right: 15px;
+        }
+        
+        .ios-install-banner .banner-close {
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        /* iOS specific optimizations */
+        @supports (-webkit-touch-callout: none) {
+            /* Fix video playback on iOS */
+            video {
+                position: relative;
+                z-index: 1;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
+            /* Improve touch targets on iOS */
+            button, .floating-capture-btn, .frame-item {
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            /* Make buttons more touch-friendly on iOS */
+            .analysis-btn, .action-button, .floating-capture-btn {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+            
+            /* Fix for iOS video playback controls */
+            video::-webkit-media-controls {
+                display: flex !important;
+                background-color: transparent;
+            }
+            
+            /* Fix scrolling issues on iOS */
+            .app-container, .frame-list-container, .main-content {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Better safe area handling for notched iPhones */
+            .app-container {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+            
+            /* Improve floating capture button positioning */
+            .floating-capture-btn {
+                bottom: calc(20px + env(safe-area-inset-bottom));
+            }
+            
+            /* Fix camera handling on iOS */
+            #cameraView {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover;
+                background-color: #000;
+            }
+        }
+        
+        /* Improve installation banner for iOS */
+        .ios-install-banner {
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .ios-install-banner .banner-text {
+            flex: 1;
+            padding-right: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .ios-install-banner .banner-text h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .ios-install-banner .banner-close {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        /* Frame grid styles */
+        .frame-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .frame-item {
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 3/4;
+            background-color: #f1f1f1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .frame-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .frame-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 5px 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Clean results container */
+        .results-section {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 10px;
+        }
+        
+        .results-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .results-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .meta-label {
+            color: #666;
+            margin-right: 5px;
+        }
+        
+        .meta-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .blue-accent {
+            color: #007aff;
+        }
+        
+        /* Hide debug logs by default */
+        #debugSection {
+            display: none;
+        }
+        
+        /* Selected frame highlight */
+        .frame-item.selected {
+            border: 3px solid #007aff;
+            box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
+        }
+        
+        /* Analysis item highlight effect */
+        .highlight-flash {
+            animation: flashHighlight 1s;
+        }
+        
+        @keyframes flashHighlight {
+            0% { background-color: rgba(0, 122, 255, 0.1); }
+            100% { background-color: transparent; }
+        }
+        
+        /* Better recording timer */
+        .record-timer {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 20px;
+            padding: 5px 10px;
+            display: none;
+            align-items: center;
+            z-index: 20;
+            font-weight: 600;
+        }
+        
+        .record-timer.active {
+            display: flex;
+        }
+        
+        .record-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #ff3b30;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
+        /* Better frame images */
+        .frame-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #f1f1f1;
+        }
+        
+        .analysis-frame {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <!-- App header -->
+    <header class="app-header">
+        <h1 class="app-title">Volleyball Coach</h1>
+    </header>
+
+    <div class="container">
+        <!-- Camera view container -->
+        <div id="cameraContainer" class="video-container">
+            <video id="cameraView" autoplay playsinline></video>
+            
+            <!-- Recording timer -->
+            <div id="recordTimer" class="record-timer">
+                <div class="record-dot"></div>
+                <span id="recordingTime">00:00</span>
+            </div>
+            
+            <!-- Capture button positioned over the video -->
+            <button id="captureBtn" class="floating-capture-btn" disabled>
+                <div class="inner-circle"></div>
+            </button>
+        </div>
+        
+        <!-- Alternative upload method for when camera doesn't work -->
+        <div class="card mt-4 mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Alternative Method</h5>
+                <p class="card-text text-muted">If the camera doesn't work, use this method instead</p>
+                
+                <div class="input-group mb-3">
+                    <input type="file" class="form-control" id="videoFileInput" accept="video/*">
+                    <button class="btn btn-primary" id="uploadVideoBtn">
+                        <i class="bi bi-cloud-arrow-up"></i> Upload & Analyze
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video preview container (hidden initially) -->
+        <div id="videoPreviewContainer" class="video-preview-container" style="display: none;">
+            <video id="videoPreview" controls playsinline></video>
+            
+            <div class="d-flex mt-3 gap-2">
+                <button id="analyzeVideoBtn" class="btn btn-primary flex-grow-1 py-3">
+                    <i class="bi bi-play-circle"></i> Analyze Video
+                </button>
+                <button id="retakeVideoBtn" class="btn btn-outline-secondary flex-grow-1 py-3">
+                    <i class="bi bi-arrow-counterclockwise"></i> Record Again
+                </button>
+            </div>
+        </div>
+        
+        <!-- Analysis loader (hidden initially) -->
+        <div id="analysisLoader" class="analysis-loader" style="display: none;">
+            <div class="loader-spinner"></div>
+            <p>Analyzing your volleyball technique...</p>
+            <p class="text-muted small">This may take a few moments</p>
+        </div>
+        
+        <!-- Analysis error (hidden initially) -->
+        <div id="analysisError" class="alert alert-danger mt-3" style="display: none;"></div>
+        
+        <!-- Analysis results container -->
+        <div id="resultContainer" style="display: none;">
+            <div class="results-section">
+                <div class="results-header">
+                    <h3 class="results-title">Analysis Results</h3>
+                </div>
+                
+                <div class="results-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Type:</span>
+                        <span class="meta-value blue-accent" id="analysisType">Technique</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Frames:</span>
+                        <span class="meta-value" id="frameCount">0</span>
+                    </div>
+                </div>
+                
+                <!-- Frame grid will display captured frames -->
+                <div class="frame-grid" id="frameGrid">
+                    <!-- Frame items will be added here dynamically -->
+                </div>
+                
+                <!-- Analysis content -->
+                <div id="analysisResults" class="mt-4">
+                    <!-- Results will be populated here -->
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button id="newRecordingBtn" class="btn btn-primary py-3">
+                        <i class="bi bi-camera-video"></i> Record New Video
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Debug section (hidden by default) -->
+        <div id="debugSection" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Debug Logs</h5>
+                    <button id="toggleDebugBtn" class="btn btn-sm btn-outline-secondary">Hide</button>
+                </div>
+                <div class="card-body">
+                    <div id="logOutput" class="bg-light p-3 rounded small" style="max-height: 200px; overflow-y: auto; font-family: monospace;">
+                        <!-- Log entries will appear here -->
+                    </div>
+                    <div class="mt-2 text-end">
+                        <button id="clearLogsBtn" class="btn btn-sm btn-outline-danger">Clear Logs</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification container -->
+    <div id="notificationContainer"></div>
+    
+    <!-- Core scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/volleyball-mobile.js?t=1742338999"></script>
+</body>
+</html>
