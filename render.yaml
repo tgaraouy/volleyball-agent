@@ -2,8 +2,8 @@ services:
   - type: web
     name: volleyball-coach
     runtime: python
-    buildCommand: pip install -r volleyball-coach/requirements.txt
-    startCommand: cd volleyball-coach && gunicorn wsgi:app --bind 0.0.0.0:$PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd volleyball-coach && python -m gunicorn wsgi:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
