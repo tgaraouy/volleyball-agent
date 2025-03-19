@@ -1,8 +1,8 @@
 opencv-python>=4.8.1.78
 numpy>=1.26.0
 pillow>=9.5.0
-openai>=1.12.0
-openai-agents==0.0.3
+# openai>=1.12.0  # Commented out to avoid conflict
+# openai-agents==0.0.3  # Commented out to avoid conflict
 # flask==2.3.3  # Removed to avoid version conflict
 # flask-cors==4.0.0  # Removed to avoid potential conflicts
 python-dotenv==1.0.0
@@ -12,4 +12,6 @@ google-api-python-client>=2.100.0
 google-auth>=2.22.0
 google-generativeai>=0.3.0
 gunicorn==21.2.0
+# Install specific OpenAI version that satisfies all requirements
+openai==1.66.2
 -r volleyball-coach/requirements.txt 

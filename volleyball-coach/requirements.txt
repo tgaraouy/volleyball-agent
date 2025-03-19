@@ -11,7 +11,7 @@ google-generativeai==0.3.2
 requests==2.31.0
 langchain==0.1.4
 langchain-openai==0.0.5
-openai==1.13.3
+openai==1.66.2
 
 # Optional dependencies
 matplotlib==3.8.2
