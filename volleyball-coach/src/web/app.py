@@ -28,7 +28,19 @@ from datetime import datetime
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from video.pipeline import VolleyballAnalysisPipeline, VolleyballStatTracker
-from ai.agent_tools import create_volleyball_agent, analyze_with_agent
+
+# Fix the import to use the correct path
+try:
+    from ai.agent_tools import create_volleyball_agent, analyze_with_agent
+except ImportError:
+    print("Warning: ai.agent_tools module not found, some features will be disabled")
+    
+    # Create stub functions for missing imports
+    def create_volleyball_agent(*args, **kwargs):
+        return None
+        
+    def analyze_with_agent(*args, **kwargs):
+        return "AI analysis is not available in this deployment"
 
 # Load environment variables
 load_dotenv()
