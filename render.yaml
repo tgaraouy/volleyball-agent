@@ -3,7 +3,7 @@ services:
     name: volleyball-coach
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: cd volleyball-coach && gunicorn wsgi:app
+    startCommand: cd volleyball-coach && gunicorn wsgi:app --bind 0.0.0.0:3000
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -12,4 +12,4 @@ services:
       - key: GOOGLE_API_KEY
         sync: false
       - key: PORT
-        value: 10000 
+        value: 3000 

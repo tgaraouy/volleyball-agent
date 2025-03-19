@@ -23,6 +23,7 @@ import ssl
 import shutil
 import logging
 from datetime import datetime
+from flask_cors import CORS
 
 # Add parent directory to path to import from other modules
 import sys
@@ -45,8 +46,22 @@ except ImportError:
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
-app = Flask(__name__)
+# Set up application paths
+app_root = os.environ.get('FLASK_APP_ROOT', os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+template_path = os.environ.get('FLASK_TEMPLATE_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
+static_path = os.environ.get('FLASK_STATIC_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static'))
+
+# Create Flask app with proper template and static paths
+app = Flask(__name__, 
+            template_folder=template_path,
+            static_folder=static_path)
+
+# Set up CORS
+app.config['CORS_HEADERS'] = 'Content-Type'
+cors = CORS(app)
+
+# Set port from environment variable
+port = int(os.environ.get('PORT', 10000))
 
 # Configure SSL context
 ssl_context = None
